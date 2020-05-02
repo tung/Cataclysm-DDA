@@ -78,6 +78,7 @@ static const mongroup_id GROUP_HAZMATBOT( "GROUP_HAZMATBOT" );
 static const mongroup_id GROUP_LAB( "GROUP_LAB" );
 static const mongroup_id GROUP_LAB_CYBORG( "GROUP_LAB_CYBORG" );
 static const mongroup_id GROUP_LAB_FEMA( "GROUP_LAB_FEMA" );
+static const mongroup_id GROUP_LAB_SECURITY( "GROUP_LAB_SECURITY" );
 static const mongroup_id GROUP_MIL_WEAK( "GROUP_MIL_WEAK" );
 static const mongroup_id GROUP_NETHER( "GROUP_NETHER" );
 static const mongroup_id GROUP_PLAIN( "GROUP_PLAIN" );
@@ -6379,7 +6380,7 @@ void science_room( map *m, int x1, int y1, int x2, int y2, int z, int rotate )
                 tmpcomp->add_failure( COMPFAIL_SHUTDOWN );
                 tmpcomp->add_failure( COMPFAIL_ALARM );
                 tmpcomp->add_failure( COMPFAIL_DAMAGE );
-                m->place_spawns( GROUP_TURRET, 1,
+                m->place_spawns( GROUP_LAB_SECURITY, 1,
                                  point( static_cast<int>( ( x1 + x2 ) / 2 ), desk ),
                                  point( static_cast<int>( ( x1 + x2 ) / 2 ), desk ), 1, true );
             } else {
@@ -6395,7 +6396,7 @@ void science_room( map *m, int x1, int y1, int x2, int y2, int z, int rotate )
                 tmpcomp->add_failure( COMPFAIL_SHUTDOWN );
                 tmpcomp->add_failure( COMPFAIL_ALARM );
                 tmpcomp->add_failure( COMPFAIL_DAMAGE );
-                m->place_spawns( GROUP_TURRET, 1,
+                m->place_spawns( GROUP_LAB_SECURITY, 1,
                                  point( desk, static_cast<int>( ( y1 + y2 ) / 2 ) ),
                                  point( desk, static_cast<int>( ( y1 + y2 ) / 2 ) ), 1, true );
             }
