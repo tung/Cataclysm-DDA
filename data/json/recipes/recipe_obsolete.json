@@ -2368,5 +2368,10 @@
     "type": "recipe",
     "result": "reflexrecurvebow",
     "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "pine_nuts",
+    "obsolete": true
   }
 ]
