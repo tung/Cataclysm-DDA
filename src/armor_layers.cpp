@@ -423,6 +423,47 @@ static void draw_grid( const catacurses::window &w, int left_pane_w, int mid_pan
     wrefresh( w );
 }
 
+static int worn_part_order( const item & i )
+{
+    return i.covers( bp_head ) ? 0 :
+           i.covers( bp_eyes ) ? 1 :
+           i.covers( bp_mouth ) ? 2 :
+           i.covers( bp_torso ) ? 3 :
+           i.covers( bp_arm_l ) ? 4 :
+           i.covers( bp_arm_r ) ? 5 :
+           i.covers( bp_hand_l ) ? 6 :
+           i.covers( bp_hand_r ) ? 7 :
+           i.covers( bp_leg_l ) ? 8 :
+           i.covers( bp_leg_r ) ? 9 :
+           i.covers( bp_foot_l ) ? 10 :
+           i.covers( bp_foot_r ) ? 11 :
+           -1;
+}
+
+static bool worn_order( const item & l, const item & r )
+{
+    if( ( l.get_covered_body_parts() & r.get_covered_body_parts() ).none() ) {
+        // No parts are shared, so use part ordering.
+        return worn_part_order( l ) < worn_part_order( r );
+    } else if( l.get_layer() != r.get_layer() ) {
+        // Shared parts, different layers, so respect layering.
+        return l.get_layer() < r.get_layer();
+    } else {
+        // Shared parts and layer.
+        if( !l.is_sided() && !r.is_sided() ) {
+            return true;
+        } else if( l.is_sided() && r.is_sided() ) {
+            // Re-order so left comes before right if applicable.
+            return l.get_side() == r.get_side() ||
+                   ( l.get_side() == side::LEFT && r.get_side() == side::RIGHT );
+        } else {
+            // One is sided and the other isn't, so sided comes
+            // after non-sided.
+            return !l.is_sided();
+        }
+    }
+}
+
 void player::sort_armor()
 {
     /* Define required height of the right pane:
@@ -751,14 +792,25 @@ void player::sort_armor()
                 }
             }
         } else if( action == "SORT_ARMOR" ) {
-            // Copy to a vector because stable_sort requires random-access
-            // iterators
+            // Copy to a vector because we need random access.
             std::vector<item> worn_copy( worn.begin(), worn.end() );
-            std::stable_sort( worn_copy.begin(), worn_copy.end(),
-            []( const item & l, const item & r ) {
-                return l.get_layer() < r.get_layer();
+
+            // Shuffle worn items into order so e.g. helmet appears near the
+            // top, boots near the bottom.
+            bool still_sorting = true;
+            for( unsigned int passes = 0; still_sorting && passes < worn_copy.size(); ++passes ) {
+                still_sorting = false;
+                // Can't do the bubble-sort optimization because this isn't a real sort.
+                for( unsigned int i = 0; i < worn_copy.size() - 1; ++i ) {
+                    if( !worn_order( worn_copy[i], worn_copy[i + 1] ) ) {
+                        item tmp_item = worn_copy[i];
+                        worn_copy[i] = worn_copy[i + 1];
+                        worn_copy[i + 1] = tmp_item;
+                        still_sorting = true;
+                    }
+                }
             }
-                            );
+
             std::copy( worn_copy.begin(), worn_copy.end(), worn.begin() );
             reset_encumbrance();
         } else if( action == "EQUIP_ARMOR" ) {
