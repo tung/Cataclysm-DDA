@@ -530,6 +530,10 @@ std::string recipe::result_name() const
     if( uistate.favorite_recipes.find( this->ident() ) != uistate.favorite_recipes.end() ) {
         name = "* " + name;
     }
+    if( container != "null" ) {
+        const itype *t = item::find_type( container );
+        name += " (" + t->nname( 1 ) + ")";
+    }
 
     return name;
 }
