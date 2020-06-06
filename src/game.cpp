@@ -7127,6 +7127,12 @@ game::vmenu_ret game::list_items( const std::vector<map_item_stack> &item_list )
     ctxt.register_action( "SORT" );
     ctxt.register_action( "TRAVEL_TO" );
 
+    if( uistate.list_item_sort == 1 ) {
+        ground_items = item_list;
+    } else if( uistate.list_item_sort == 2 ) {
+        std::sort( ground_items.begin(), ground_items.end(), map_item_stack::map_item_stack_sort );
+    }
+
     do {
         if( action == "COMPARE" ) {
             game_menus::inv::compare( u, active_pos );
@@ -7193,9 +7199,11 @@ game::vmenu_ret game::list_items( const std::vector<map_item_stack> &item_list )
                 sort_radius = false;
                 addcategory = true;
                 uistate.list_item_sort = 2; // list is sorted by category
+                std::sort( ground_items.begin(), ground_items.end(), map_item_stack::map_item_stack_sort );
             } else {
                 sort_radius = true;
                 uistate.list_item_sort = 1; // list is sorted by distance
+                ground_items = item_list;
             }
             highPEnd = -1;
             lowPStart = -1;
@@ -7216,11 +7224,6 @@ game::vmenu_ret game::list_items( const std::vector<map_item_stack> &item_list )
             } else {
                 add_msg( m_info, _( "You can't travel there." ) );
             }
-        }
-        if( uistate.list_item_sort == 1 ) {
-            ground_items = item_list;
-        } else if( uistate.list_item_sort == 2 ) {
-            std::sort( ground_items.begin(), ground_items.end(), map_item_stack::map_item_stack_sort );
         }
 
         if( refilter ) {
