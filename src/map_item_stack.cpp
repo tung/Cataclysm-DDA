@@ -46,8 +46,7 @@ void map_item_stack::add_at_pos( const item *const it, const tripoint &pos )
 bool map_item_stack::map_item_stack_sort( const map_item_stack &lhs, const map_item_stack &rhs )
 {
     if( lhs.example->get_category() == rhs.example->get_category() ) {
-        return square_dist( tripoint_zero, lhs.vIG[0].pos ) <
-               square_dist( tripoint_zero, rhs.vIG[0].pos );
+        return lhs.example->tname( 1, false ) < rhs.example->tname( 1, false );
     }
 
     return lhs.example->get_category() < rhs.example->get_category();
