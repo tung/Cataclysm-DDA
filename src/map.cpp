@@ -5517,9 +5517,9 @@ bool map::draw_maptile_from_memory( const catacurses::window &w, const tripoint 
         const int k = p.x + getmaxx( w ) / 2 - view_center.x;
         const int j = p.y + getmaxy( w ) / 2 - view_center.y;
 
-        mvwputch( w, point( k, j ), c_brown, sym );
+        mvwputch( w, point( k, j ), c_dark_gray, sym );
     } else {
-        wputch( w, c_brown, sym );
+        wputch( w, c_dark_gray, sym );
     }
     return true;
 }
