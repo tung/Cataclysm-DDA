@@ -45,6 +45,11 @@ std::function<bool( const item & )> basic_item_filter( std::string filter )
                     return lcmatch( e.first->name, filter );
                 } );
             };
+        // flag
+        case 'f':
+            return [filter]( const item & i ) {
+                return i.has_flag( filter );
+            };
         // both
         case 'b':
             return [filter]( const item & i ) {
