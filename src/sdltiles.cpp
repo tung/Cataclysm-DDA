@@ -21,6 +21,7 @@
 #include <set>
 #include <type_traits>
 #include <tuple>
+#include <unordered_map>
 
 #include "platform_win.h"
 #if defined(_MSC_VER) && defined(USE_VCPKG)
@@ -719,6 +720,184 @@ void CachedTTFFont::OutputChar( const std::string &ch, const int x, const int y,
     }
 }
 
+// Map of Unicode code points to positions in a BitmapFont.
+// Box drawing lines are excluded because they're handled specially.
+static const std::unordered_map<int, int> unicode_to_bitmap = {
+    { 0x263A, 1 }, // ☺
+    { 0x263B, 2 }, // ☻
+    { 0x2665, 3 }, // ♥
+    { 0x2666, 4 }, // ♦
+    { 0x2663, 5 }, // ♣
+    { 0x2660, 6 }, // ♠
+    { 0x2022, 7 }, // •
+    { 0x25D8, 8 }, // ◘
+    { 0x25CB, 9 }, // ○
+    { 0x25D9, 10 }, // ◙
+    { 0x2642, 11 }, // ♂
+    { 0x2640, 12 }, // ♀
+    { 0x266A, 13 }, // ♪
+    { 0x266B, 14 }, // ♫
+    { 0x263C, 15 }, // ☼
+
+    { 0x25BA, 16 }, // ►
+    { 0x25C4, 17 }, // ◄
+    { 0x2195, 18 }, // ↕
+    { 0x203C, 19 }, // ‼
+    { 0x00B6, 20 }, // ¶
+    { 0x00A7, 21 }, // §
+    { 0x25AC, 22 }, // ▬
+    { 0x21A8, 23 }, // ↨
+    { 0x2191, 24 }, // ↑
+    { 0x2193, 25 }, // ↓
+    { 0x2192, 26 }, // →
+    { 0x2190, 27 }, // ←
+    { 0x221F, 28 }, // ∟
+    { 0x2194, 29 }, // ↔
+    { 0x25B2, 30 }, // ▲
+    { 0x25BC, 31 }, // ▼
+
+    { 0x00A0, 32 }, // re-interpret non-breaking space as space
+
+    { 0x2302, 127 }, // ⌂
+
+    { 0x00C7, 128 }, // Ç
+    { 0x00FC, 129 }, // ü
+    { 0x00E9, 130 }, // é
+    { 0x00E2, 131 }, // â
+    { 0x00E4, 132 }, // ä
+    { 0x00E0, 133 }, // à
+    { 0x00E5, 134 }, // å
+    { 0x00E7, 135 }, // ç
+    { 0x00EA, 136 }, // ê
+    { 0x00EB, 137 }, // ë
+    { 0x00E8, 138 }, // è
+    { 0x00EF, 139 }, // ï
+    { 0x00EE, 140 }, // î
+    { 0x00EC, 141 }, // ì
+    { 0x00C4, 142 }, // Ä
+    { 0x00C5, 143 }, // Å
+
+    { 0x00C9, 144 }, // É
+    { 0x00E6, 145 }, // æ
+    { 0x00C6, 146 }, // Æ
+    { 0x00F4, 147 }, // ô
+    { 0x00F6, 148 }, // ö
+    { 0x00F2, 149 }, // ò
+    { 0x00FB, 150 }, // û
+    { 0x00F9, 151 }, // ù
+    { 0x00FF, 152 }, // ÿ
+    { 0x00D6, 153 }, // Ö
+    { 0x00DC, 154 }, // Ü
+    { 0x00A2, 155 }, // ¢
+    { 0x00A3, 156 }, // £
+    { 0x00A5, 157 }, // ¥
+    { 0x20A7, 158 }, // ₧
+    { 0x0192, 159 }, // ƒ
+
+    { 0x00E1, 160 }, // á
+    { 0x00ED, 161 }, // í
+    { 0x00F3, 162 }, // ó
+    { 0x00FA, 163 }, // ú
+    { 0x00F1, 164 }, // ñ
+    { 0x00D1, 165 }, // Ñ
+    { 0x00AA, 166 }, // ª
+    { 0x00BA, 167 }, // º
+    { 0x00BF, 168 }, // ¿
+    { 0x2310, 169 }, // ⌐
+    { 0x00AC, 170 }, // ¬
+    { 0x00BD, 171 }, // ½
+    { 0x00BC, 172 }, // ¼
+    { 0x00A1, 173 }, // ¡
+    { 0x00AB, 174 }, // «
+    { 0x00BB, 175 }, // »
+
+    { 0x2591, 176 }, // ░
+    { 0x2592, 177 }, // ▒
+    { 0x2593, 178 }, // ▓
+    //{ 0x2502, 179 }, // │ LINE_XOXO_UNICODE
+    //{ 0x2524, 180 }, // ┤ LINE_XOXX_UNICODE
+    { 0x2561, 181 }, // ╡
+    { 0x2562, 182 }, // ╢
+    { 0x2556, 183 }, // ╖
+    { 0x2555, 184 }, // ╕
+    { 0x2563, 185 }, // ╣
+    { 0x2551, 186 }, // ║
+    { 0x2557, 187 }, // ╗
+    { 0x255D, 188 }, // ╝
+    { 0x255C, 189 }, // ╜
+    { 0x255B, 190 }, // ╛
+    //{ 0x2510, 191 }, // ┐ LINE_OOXX_UNICODE
+
+    //{ 0x2514, 192 }, // └ LINE_XXOO_UNICODE
+    //{ 0x2534, 193 }, // ┴ LINE_XXOX_UNICODE
+    //{ 0x252C, 194 }, // ┬ LINE_OXXX_UNICODE
+    //{ 0x251C, 195 }, // ├ LINE_XXXO_UNICODE
+    //{ 0x2500, 196 }, // ─ LINE_OXOX_UNICODE
+    //{ 0x253C, 197 }, // ┼ LINE_XXXX_UNICODE
+    { 0x255E, 198 }, // ╞
+    { 0x255F, 199 }, // ╟
+    { 0x255A, 200 }, // ╚
+    { 0x2554, 201 }, // ╔
+    { 0x2569, 202 }, // ╩
+    { 0x2566, 203 }, // ╦
+    { 0x2560, 204 }, // ╠
+    { 0x2550, 205 }, // ═
+    { 0x256C, 206 }, // ╬
+    { 0x2567, 207 }, // ╧
+
+    { 0x2568, 208 }, // ╨
+    { 0x2564, 209 }, // ╤
+    { 0x2565, 210 }, // ╥
+    { 0x2559, 211 }, // ╙
+    { 0x2558, 212 }, // ╘
+    { 0x2552, 213 }, // ╒
+    { 0x2553, 214 }, // ╓
+    { 0x256B, 215 }, // ╫
+    { 0x256A, 216 }, // ╪
+    //{ 0x2518, 217 }, // ┘ // LINE_XOOX_UNICODE
+    //{ 0x250C, 218 }, // ┌ // LINE_OXXO_UNICODE
+    { 0x2588, 219 }, // █
+    { 0x2584, 220 }, // ▄
+    { 0x258C, 221 }, // ▌
+    { 0x2590, 222 }, // ▐
+    { 0x2580, 223 }, // ▀
+
+    { 0x03B1, 224 }, // α
+    { 0x00DF, 225 }, // ß
+    { 0x0393, 226 }, // Γ
+    { 0x03C0, 227 }, // π
+    { 0x03A3, 228 }, // Σ
+    { 0x03C3, 229 }, // σ
+    { 0x00B5, 230 }, // µ
+    { 0x03C4, 231 }, // τ
+    { 0x03A6, 232 }, // Φ
+    { 0x0398, 233 }, // Θ
+    { 0x03A9, 234 }, // Ω
+    { 0x03B4, 235 }, // δ
+    { 0x221E, 236 }, // ∞
+    { 0x03C6, 237 }, // φ
+    { 0x03B5, 238 }, // ε
+    { 0x2229, 239 }, // ∩
+
+    { 0x2261, 240 }, // ≡
+    { 0x00B1, 241 }, // ±
+    { 0x2265, 242 }, // ≥
+    { 0x2264, 243 }, // ≤
+    { 0x2320, 244 }, // ⌠
+    { 0x2321, 245 }, // ⌡
+    { 0x00F7, 246 }, // ÷
+    { 0x2248, 247 }, // ≈
+    { 0x00B0, 248 }, // °
+    { 0x2219, 249 }, // ∙
+    { 0x00B7, 250 }, // ·
+    { 0x221A, 251 }, // √
+    { 0x207F, 252 }, // ⁿ
+    { 0x00B2, 253 }, // ²
+    { 0x25A0, 254 }, // ■
+
+    { 0x2026, 255 }  // … game-specific position for ellipsis in BitmapFont
+};
+
 bool BitmapFont::isGlyphProvided( const std::string &ch ) const
 {
     const uint32_t t = UTF8_getch( ch );
@@ -736,7 +915,8 @@ bool BitmapFont::isGlyphProvided( const std::string &ch ) const
         case LINE_XXXX_UNICODE:
             return true;
         default:
-            return t < 256;
+            return ( t >= 32 && t <= 126 ) ||
+                   unicode_to_bitmap.find( t ) != unicode_to_bitmap.end();
     }
 }
 
@@ -750,10 +930,19 @@ void BitmapFont::OutputChar( const std::string &ch, const int x, const int y,
 void BitmapFont::OutputChar( const int t, const int x, const int y,
                              const unsigned char color, const float opacity )
 {
-    if( t <= 256 ) {
+    int tt = 0;
+    if( t >= 32 && t <= 126 ) {
+        tt = t;
+    } else {
+        auto u2b = unicode_to_bitmap.find( t );
+        if( u2b != unicode_to_bitmap.end() ) {
+            tt = u2b->second;
+        }
+    }
+    if( tt != 0 ) {
         SDL_Rect src;
-        src.x = ( t % tilewidth ) * fontwidth;
-        src.y = ( t / tilewidth ) * fontheight;
+        src.x = ( tt % tilewidth ) * fontwidth;
+        src.y = ( tt / tilewidth ) * fontheight;
         src.w = fontwidth;
         src.h = fontheight;
         SDL_Rect rect;
