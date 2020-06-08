@@ -3826,6 +3826,50 @@ void game::mon_info( const catacurses::window &w, int hor_padding )
     }
 }
 
+static std::string proximity_to_you( Creature &u, Creature &c )
+{
+    std::string desc;
+
+    tripoint p = c.pos() - u.pos();
+
+    if( p.y > 0 ) {
+        desc += string_format( "%dS", p.y );
+    } else if( p.y < 0 ) {
+        desc += string_format( "%dN", -p.y );
+    }
+
+    if( p.x ) {
+        if( !desc.empty() ) {
+            desc += " ";
+        }
+        if( p.x > 0 ) {
+            desc += string_format( "%dE", p.x );
+        } else {
+            desc += string_format( "%dW", -p.x );
+        }
+    }
+
+    if( p.z ) {
+        if( !desc.empty() ) {
+            desc += " ";
+        }
+        if( p.z > 0 ) {
+            desc += "above";
+        } else {
+            desc += "below";
+        }
+    }
+
+    if( c.sees( u ) ) {
+        if( !desc.empty() ) {
+            desc += ", ";
+        }
+        desc += "aware of you";
+    }
+
+    return "(" + desc + ")";
+}
+
 void game::mon_info_update( )
 {
     int newseen = 0;
@@ -3980,7 +4024,8 @@ void game::mon_info_update( )
             if( !new_seen_mon.empty() ) {
                 monster &critter = *new_seen_mon.back();
                 cancel_activity_or_ignore_query( distraction_type::hostile_spotted_far,
-                                                 string_format( _( "%s spotted!" ), critter.name() ) );
+                                                 string_format( _( "%s spotted %s!" ), critter.name(),
+                                                                proximity_to_you( u, critter ) ) );
                 if( u.has_trait( trait_id( "M_DEFENDER" ) ) && critter.type->in_species( PLANT ) ) {
                     add_msg( m_warning, _( "We have detected a %s - an enemy of the Mycus!" ), critter.name() );
                     if( !u.has_effect( effect_adrenaline_mycus ) ) {
@@ -3995,7 +4040,8 @@ void game::mon_info_update( )
             } else {
                 //Hostile NPC
                 cancel_activity_or_ignore_query( distraction_type::hostile_spotted_far,
-                                                 _( "Hostile survivor spotted!" ) );
+                                                 string_format( _( "Hostile survivor spotted %s!" ),
+                                                                proximity_to_you( u, *new_seen_mon.back() ) ) );
             }
         } else {
             cancel_activity_or_ignore_query( distraction_type::hostile_spotted_far, _( "Monsters spotted!" ) );
