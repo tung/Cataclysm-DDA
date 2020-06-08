@@ -1066,6 +1066,33 @@ static std::vector<std::list<item *>> restack_items( const item_stack::const_ite
     return res;
 }
 
+// Should only be called with an "INVENTORY" input_context instance.
+void inventory_selector::register_actions( input_context &ctxt )
+{
+    ctxt.register_action( "DOWN", to_translation( "Next item" ) );
+    ctxt.register_action( "UP", to_translation( "Previous item" ) );
+    ctxt.register_action( "RIGHT", to_translation( "Next column" ) );
+    ctxt.register_action( "LEFT", to_translation( "Previous column" ) );
+    ctxt.register_action( "CONFIRM", to_translation( "Confirm your selection" ) );
+    ctxt.register_action( "QUIT", to_translation( "Cancel" ) );
+    ctxt.register_action( "CATEGORY_SELECTION", to_translation( "Switch selection mode" ) );
+    ctxt.register_action( "TOGGLE_FAVORITE", to_translation( "Toggle favorite" ) );
+    ctxt.register_action( "NEXT_TAB", to_translation( "Page down" ) );
+    ctxt.register_action( "PREV_TAB", to_translation( "Page up" ) );
+    ctxt.register_action( "HOME", to_translation( "Home" ) );
+    ctxt.register_action( "END", to_translation( "End" ) );
+    ctxt.register_action( "HELP_KEYBINDINGS" );
+    ctxt.register_action( "ANY_INPUT" ); // For invlets
+    ctxt.register_action( "INVENTORY_FILTER" );
+}
+
+bool inventory_selector::key_bound_to_action( char key )
+{
+    input_context ctxt( "INVENTORY" );
+    inventory_selector::register_actions( ctxt );
+    return ctxt.key_is_bound( key );
+}
+
 const item_category *inventory_selector::naturalize_category( const item_category &category,
         const tripoint &pos )
 {
@@ -1646,21 +1673,7 @@ inventory_selector::inventory_selector( player &u, const inventory_selector_pres
     , own_gear_column( preset )
     , map_column( preset )
 {
-    ctxt.register_action( "DOWN", to_translation( "Next item" ) );
-    ctxt.register_action( "UP", to_translation( "Previous item" ) );
-    ctxt.register_action( "RIGHT", to_translation( "Next column" ) );
-    ctxt.register_action( "LEFT", to_translation( "Previous column" ) );
-    ctxt.register_action( "CONFIRM", to_translation( "Confirm your selection" ) );
-    ctxt.register_action( "QUIT", to_translation( "Cancel" ) );
-    ctxt.register_action( "CATEGORY_SELECTION", to_translation( "Switch selection mode" ) );
-    ctxt.register_action( "TOGGLE_FAVORITE", to_translation( "Toggle favorite" ) );
-    ctxt.register_action( "NEXT_TAB", to_translation( "Page down" ) );
-    ctxt.register_action( "PREV_TAB", to_translation( "Page up" ) );
-    ctxt.register_action( "HOME", to_translation( "Home" ) );
-    ctxt.register_action( "END", to_translation( "End" ) );
-    ctxt.register_action( "HELP_KEYBINDINGS" );
-    ctxt.register_action( "ANY_INPUT" ); // For invlets
-    ctxt.register_action( "INVENTORY_FILTER" );
+    inventory_selector::register_actions( ctxt );
 
     append_column( own_inv_column );
     append_column( map_column );

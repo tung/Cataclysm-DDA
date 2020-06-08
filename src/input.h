@@ -663,6 +663,11 @@ class input_context
                                   bool restrict_to_printable = true ) const;
 
         /**
+         * Test if a key would trigger an action in this context.
+         */
+        bool key_is_bound( char key ) const;
+
+        /**
         * Get/Set edittext to display IME unspecified string.
         */
         void set_edittext( const std::string &s );

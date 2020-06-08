@@ -461,6 +461,12 @@ class inventory_selector
 
         bool keep_open = false;
 
+    private:
+        static void register_actions( input_context &ctxt );
+
+    public:
+        static bool key_bound_to_action( char key );
+
     protected:
         player &u;
         const inventory_selector_preset &preset;

@@ -33,6 +33,7 @@
 #include "colony.h"
 #include "flat_set.h"
 #include "point.h"
+#include "inventory_ui.h" // auto inventory key blocking
 
 static const std::string flag_LEAK_ALWAYS( "LEAK_ALWAYS" );
 static const std::string flag_LEAK_DAM( "LEAK_DAM" );
@@ -1038,6 +1039,10 @@ void inventory::assign_empty_invlet( item &it, const Character &p, const bool fo
         for( const auto &inv_char : inv_chars ) {
             if( assigned_invlet.count( inv_char ) ) {
                 // don't overwrite assigned keys
+                continue;
+            }
+            if( inventory_selector::key_bound_to_action( inv_char ) ) {
+                // don't auto-assign bound keys
                 continue;
             }
             if( !cur_inv[inv_char] ) {

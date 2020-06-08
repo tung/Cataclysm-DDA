@@ -712,6 +712,18 @@ std::string input_context::key_bound_to( const std::string &action_descriptor, c
     return bound_keys.size() > index ? std::string( 1, bound_keys[index] ) : "";
 }
 
+bool input_context::key_is_bound( char key ) const
+{
+    for( const std::string action : registered_actions ) {
+        for( char k : keys_bound_to( action ) ) {
+            if( k == key ) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 std::string input_context::get_available_single_char_hotkeys( std::string requested_keys )
 {
     for( std::vector<std::string>::const_iterator registered_action = registered_actions.begin();
