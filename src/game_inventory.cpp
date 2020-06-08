@@ -1068,6 +1068,12 @@ class read_inventory_preset: public pickup_inventory_preset
             const auto &book_b = get_book( rhs.any_item() );
 
             if( !book_a.skill && !book_b.skill ) {
+                const bool martial_arts_a = lhs.any_item()->type->can_use( "MA_MANUAL" );
+                const bool martial_arts_b = rhs.any_item()->type->can_use( "MA_MANUAL" );
+                if( martial_arts_a != martial_arts_b ) {
+                    return martial_arts_a;
+                }
+
                 return ( book_a.fun == book_b.fun ) ? base_sort : book_a.fun > book_b.fun;
             } else if( !book_a.skill || !book_b.skill ) {
                 return static_cast<bool>( book_a.skill );
@@ -1076,8 +1082,19 @@ class read_inventory_preset: public pickup_inventory_preset
             const bool train_a = p.get_skill_level( book_a.skill ) < book_a.level;
             const bool train_b = p.get_skill_level( book_b.skill ) < book_b.level;
 
-            if( !train_a || !train_b ) {
-                return ( !train_a && !train_b ) ? base_sort : train_a;
+            if( train_a != train_b ) {
+                return train_a;
+            }
+
+            const std::string skill_name_a = book_a.skill->name();
+            const std::string skill_name_b = book_b.skill->name();
+
+            if( skill_name_a != skill_name_b ) {
+                return skill_name_a < skill_name_b;
+            }
+
+            if( book_a.level != book_b.level ) {
+                return book_a.level < book_b.level;
             }
 
             return base_sort;
