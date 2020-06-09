@@ -2974,20 +2974,33 @@ item::reload_option player::select_ammo( const item &base,
             if( e.ammo->ammo_current() == "battery" ) {
                 // This battery ammo is not a real object that can be recovered but pseudo-object that represents charge
                 //~ battery storage (charges)
-                return string_format( pgettext( "magazine", "%1$s (%2$d)" ), e.ammo->type_name(),
-                                      e.ammo->ammo_remaining() );
+                return string_format( npgettext( "magazine", "%1$s (%2$d)", "%3$d %1$s (%2$d)", e.stack ),
+                                      e.ammo->type_name( e.stack ),
+                                      e.ammo->ammo_remaining(),
+                                      e.stack );
             } else {
                 //~ magazine with ammo (count)
-                return string_format( pgettext( "magazine", "%1$s with %2$s (%3$d)" ), e.ammo->type_name(),
-                                      e.ammo->ammo_data()->nname( e.ammo->ammo_remaining() ), e.ammo->ammo_remaining() );
+                return string_format( npgettext( "magazine", "%1$s with %2$s (%3$d)", "%4$d %1$s with %2$s (%3$d)", e.stack ),
+                                      e.ammo->type_name( e.stack ),
+                                      e.ammo->ammo_data()->nname( e.ammo->ammo_remaining() ),
+                                      e.ammo->ammo_remaining(),
+                                      e.stack );
             }
-        } else if( e.ammo->is_watertight_container() ||
-                   ( e.ammo->is_ammo_container() && is_worn( *e.ammo ) ) ) {
+        } else if( e.ammo->is_watertight_container() ) {
+            // Put the stack number close to the liquid quantity.
+            return string_format( ngettext( "%1$s", "%1$s x %2$d", e.stack ),
+                                  e.ammo->contents.front().display_name(),
+                                  e.stack );
+        } else if( e.ammo->is_ammo_container() && is_worn( *e.ammo ) ) {
             // worn ammo containers should be named by their contents with their location also updated below
-            return e.ammo->contents.front().display_name();
-
+            return string_format( ngettext( "%1$s", "%2$d %1$s", e.stack ),
+                                  e.ammo->contents.front().display_name( e.stack ),
+                                  e.stack );
         } else {
-            return ( ammo_location && ammo_location == e.ammo ? "* " : "" ) + e.ammo->display_name();
+            return string_format( ngettext( "%1$s%2$s", "%3$d %1$s%2$s", e.stack ),
+                                  ( ammo_location && ammo_location == e.ammo ? "* " : "" ),
+                                  e.ammo->display_name( e.stack ),
+                                  e.stack );
         }
     } );
 
@@ -3000,7 +3013,10 @@ item::reload_option player::select_ammo( const item &base,
             if( is_ammo_container && is_worn( *e.ammo ) ) {
                 return e.ammo->type_name();
             }
-            return string_format( _( "%s, %s" ), e.ammo->type_name(), e.ammo.describe( &g->u ) );
+            return string_format( ngettext( "%1$s, %2$s", "%3$d %1$s, %2$s", e.stack ),
+                                 e.ammo->type_name( e.stack ),
+                                 e.ammo.describe( &g->u ),
+                                 e.stack );
         }
         return e.ammo.describe( &g->u );
     } );
@@ -3210,7 +3226,18 @@ bool player::list_ammo( const item &base, std::vector<item::reload_option> &ammo
                 }
             }
             if( can_reload( *e, id ) || e->has_flag( "RELOAD_AND_SHOOT" ) ) {
-                ammo_list.emplace_back( this, e, &base, std::move( ammo ) );
+                auto match = std::find_if( ammo_list.begin(), ammo_list.end(),
+                [ &ammo ]( const item::reload_option &ro ){
+                    return ammo.where() == ro.ammo.where() &&
+                           ammo.position() == ro.ammo.position() &&
+                           ammo->display_stacked_with( *( ro.ammo.get_item() ) );
+                });
+
+                if( match != ammo_list.end() ) {
+                    match->stack++;
+                } else {
+                    ammo_list.emplace_back( this, e, &base, std::move( ammo ) );
+                }
             }
         }
     }

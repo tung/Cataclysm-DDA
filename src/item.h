@@ -445,6 +445,7 @@ class item : public visitable<item>
                 const player *who = nullptr;
                 const item *target = nullptr;
                 item_location ammo;
+                int stack = 1;
 
                 int qty() const {
                     return qty_;
