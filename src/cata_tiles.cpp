@@ -2593,7 +2593,8 @@ bool cata_tiles::draw_vpart( const tripoint &p, lit_level ll, int &height_3d,
         const int subtile = part_mod == 1 ? open_ : part_mod == 2 ? broken : 0;
         const int rotation = veh.face.dir();
         const std::string vpname = "vp_" + vp_id.str();
-        if( !veh.forward_velocity() && !veh.player_in_control( g->u ) &&
+        const bool grabbed = g->u.get_grab_type() == OBJECT_VEHICLE && g->u.pos() + g->u.grab_point == p;
+        if( !grabbed && !veh.forward_velocity() && !veh.player_in_control( g->u ) &&
             g->m.check_seen_cache( p ) ) {
             g->u.memorize_tile( g->m.getabs( p ), vpname, subtile, rotation );
         }

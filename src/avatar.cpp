@@ -658,6 +658,26 @@ bool avatar::read( item &it, const bool continuous )
 
 void avatar::grab( object_type grab_type, const tripoint &grab_point )
 {
+    // Clear map memory for vehicle tiles when grabbing and releasing to prevent ghost vehicles.
+    if( is_player() && ( grab_type == OBJECT_VEHICLE || this->grab_type == OBJECT_VEHICLE ) ) {
+        tripoint p = pos();
+        if( grab_type == OBJECT_VEHICLE ) {
+            // grabbing a vehicle
+            p += grab_point;
+        } else { // if( this->grab_type == OBJECT_VEHICLE ) {
+            // ungrabbing from vehicle
+            p += this->grab_point;
+        }
+        optional_vpart_position vp = g->m.veh_at( p );
+        if( vp ) {
+            vehicle &veh = vp->vehicle();
+            for( const tripoint &target : veh.get_points() ) {
+                clear_memorized_tile( g->m.getabs( target ) );
+                g->m.set_memory_seen_cache_dirty( target );
+            }
+        }
+    }
+
     this->grab_type = grab_type;
     this->grab_point = grab_point;
 
