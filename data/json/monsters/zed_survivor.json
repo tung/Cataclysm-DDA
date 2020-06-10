@@ -31,7 +31,6 @@
     "special_attacks": [
       [ "SHRIEK", 20 ],
       { "type": "bite", "cooldown": 5, "min_mul": 1 },
-      [ "GRAB", 7 ],
       { "id": "scratch", "damage_max_instance": [ { "damage_type": "cut", "amount": 16 } ] }
     ],
     "death_drops": "mon_zombie_survivor_death_drops",
