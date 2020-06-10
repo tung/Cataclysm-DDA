@@ -349,13 +349,13 @@ bite_actor::bite_actor() = default;
 void bite_actor::load_internal( const JsonObject &obj, const std::string &src )
 {
     melee_actor::load_internal( obj, src );
-    no_infection_chance = obj.get_int( "no_infection_chance", 14 );
+    no_infection_chance = obj.get_int( "no_infection_chance", 28 );
 }
 
 void bite_actor::on_damage( monster &z, Creature &target, dealt_damage_instance &dealt ) const
 {
     melee_actor::on_damage( z, target, dealt );
-    if( target.has_effect( effect_grabbed ) && one_in( no_infection_chance - dealt.total_damage() ) ) {
+    if( one_in( no_infection_chance - dealt.total_damage() ) ) {
         const body_part hit = dealt.bp_hit;
         if( target.has_effect( effect_bite, hit ) ) {
             target.add_effect( effect_bite, 40_minutes, hit, true );
