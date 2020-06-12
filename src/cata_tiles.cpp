@@ -2584,23 +2584,32 @@ bool cata_tiles::draw_vpart( const tripoint &p, lit_level ll, int &height_3d,
     // first memorize the actual vpart
     const optional_vpart_position vp = g->m.veh_at( p );
     if( vp && !invisible[0] ) {
-        const vehicle &veh = vp->vehicle();
+        const vehicle *veh = &( vp->vehicle() );
         const int veh_part = vp->part_index();
         // Gets the visible part, should work fine once tileset vp_ids are updated to work with the vehicle part json ids
         // get the vpart_id
         char part_mod = 0;
-        const vpart_id &vp_id = veh.part_id_string( veh_part, part_mod );
+        const vpart_id &vp_id = veh->part_id_string( veh_part, part_mod );
         const int subtile = part_mod == 1 ? open_ : part_mod == 2 ? broken : 0;
-        const int rotation = veh.face.dir();
+        const int rotation = veh->face.dir();
         const std::string vpname = "vp_" + vp_id.str();
-        const bool grabbed = g->u.get_grab_type() == OBJECT_VEHICLE && g->u.pos() + g->u.grab_point == p;
-        if( !grabbed && !veh.forward_velocity() && !veh.player_in_control( g->u ) &&
+
+        bool grabbed = false;
+        if( g->u.get_grab_type() == OBJECT_VEHICLE ) {
+            int dummy;
+            const vehicle *veh2 = g->m.veh_at_internal( g->u.pos() + g->u.grab_point, dummy );
+            if( veh == veh2 ) {
+                grabbed = true;
+            }
+        }
+
+        if( !grabbed && !veh->forward_velocity() && !veh->player_in_control( g->u ) &&
             g->m.check_seen_cache( p ) ) {
             g->u.memorize_tile( g->m.getabs( p ), vpname, subtile, rotation );
         }
         if( !overridden ) {
             const cata::optional<vpart_reference> cargopart = vp.part_with_feature( "CARGO", true );
-            const bool draw_highlight = cargopart && !veh.get_items( cargopart->part_index() ).empty();
+            const bool draw_highlight = cargopart && !veh->get_items( cargopart->part_index() ).empty();
             const bool ret = draw_from_id_string( vpname, C_VEHICLE_PART, empty_string, p, subtile, rotation,
                                                   ll, nv_goggles_activated, height_3d );
             if( ret && draw_highlight ) {

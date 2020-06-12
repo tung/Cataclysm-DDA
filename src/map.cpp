@@ -5792,8 +5792,15 @@ bool map::draw_maptile( const catacurses::window &w, const player &u, const trip
         tercol = veh->part_color( veh_part );
         item_sym.clear(); // clear the item symbol so `sym` is used instead.
 
-        const bool grabbed = g->u.get_grab_type() == OBJECT_VEHICLE &&
-                             g->u.pos() + g->u.grab_point == p;
+        bool grabbed = false;
+        if( g->u.get_grab_type() == OBJECT_VEHICLE ) {
+            int dummy;
+            const vehicle *veh2 = veh_at_internal( g->u.pos() + g->u.grab_point, dummy );
+            if( veh == veh2 ) {
+                grabbed = true;
+            }
+        }
+
         if( !grabbed && !veh->forward_velocity() && !veh->player_in_control( g->u ) ) {
             memory_sym = sym;
         }
