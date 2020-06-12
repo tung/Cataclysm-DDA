@@ -5665,10 +5665,13 @@ bool map::draw_maptile( const catacurses::window &w, const player &u, const trip
     bool hi = false;
     bool graf = false;
     bool draw_item_sym = false;
+    bool recheck_memory = false;
 
     int terrain_sym;
     if( curr_ter.has_flag( TFLAG_AUTO_WALL_SYMBOL ) ) {
         terrain_sym = determine_wall_corner( p );
+        // Wall sym memory may change based on seeing new surrounding walls.
+        recheck_memory = true;
     } else {
         terrain_sym = curr_ter.symbol();
     }
@@ -5796,7 +5799,13 @@ bool map::draw_maptile( const catacurses::window &w, const player &u, const trip
         }
     }
 
-    if( check_and_set_seen_cache( p ) ) {
+    bool force_refresh_memory = false;
+    if( recheck_memory ) {
+        int memorized_sym = g->u.get_memorized_symbol( getabs( p ) );
+        force_refresh_memory = memorized_sym != memory_sym;
+    }
+
+    if( check_and_set_seen_cache( p ) || force_refresh_memory ) {
         g->u.memorize_symbol( getabs( p ), memory_sym );
     }
 
