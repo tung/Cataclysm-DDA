@@ -7,6 +7,7 @@
 #include "item.h"
 #include "item_category.h"
 #include "material.h"
+#include "mtype.h"
 #include "requirements.h"
 #include "string_id.h"
 #include "type_id.h"
@@ -48,7 +49,20 @@ std::function<bool( const item & )> basic_item_filter( std::string filter )
         // flag
         case 'f':
             return [filter]( const item & i ) {
-                return i.has_flag( filter );
+                try {
+                    if( i.has_flag( filter ) ) {
+                        return true;
+                    } else if( i.is_container() && !i.is_container_empty() ) {
+                        return i.get_contained().has_flag( filter );
+                    } else if( i.is_corpse() ) {
+                        const mtype *corpse_mtype = i.get_mtype();
+                        m_flag mf = io::string_to_enum<m_flag>( filter );
+                        return corpse_mtype->has_flag( mf );
+                    }
+                    return false;
+                } catch ( io::InvalidEnumString & ) {
+                    return false;
+                }
             };
         // both
         case 'b':
