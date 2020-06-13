@@ -5827,7 +5827,14 @@ bool map::draw_maptile( const catacurses::window &w, const player &u, const trip
     } else if( u_vision[NV_GOGGLES] ) {
         tercol = ( bright_light ) ? c_white : c_light_green;
     } else if( low_light ) {
-        tercol = c_dark_gray;
+        if( tercol == c_white || tercol == c_light_gray ||
+            tercol == c_light_red || tercol == c_light_green ||
+            tercol == c_light_blue || tercol == c_light_cyan ||
+            tercol == c_pink || tercol == c_yellow ) {
+            tercol = c_light_gray;
+        } else {
+            tercol = c_dark_gray;
+        }
     } else if( u_vision[DARKNESS] ) {
         tercol = c_dark_gray;
     }
