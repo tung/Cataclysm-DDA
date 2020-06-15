@@ -3826,7 +3826,7 @@ void game::mon_info( const catacurses::window &w, int hor_padding )
     }
 }
 
-static std::string proximity_to_you( Creature &u, Creature &c )
+static std::string proximity_to_you( const Creature &u, const Creature &c )
 {
     std::string desc;
 
@@ -3882,6 +3882,7 @@ void game::mon_info_update( )
     auto &unique_types = mon_visible.unique_types;
     auto &unique_mons = mon_visible.unique_mons;
     auto &dangerous = mon_visible.dangerous;
+    const Creature *spotted_npc = nullptr;
 
     // 7 0 1    unique_types uses these indices;
     // 6 8 2    0-7 are provide by direction_from()
@@ -4012,6 +4013,7 @@ void game::mon_info_update( )
             if( ( !safemode_empty && safemode_state == RULE_BLACKLISTED ) || ( safemode_empty &&
                     p->get_attitude() == NPCATT_KILL ) ) {
                 if( !safemode_empty || npc_dist <= iProxyDist ) {
+                    spotted_npc = p;
                     newseen++;
                 }
             }
@@ -4040,8 +4042,9 @@ void game::mon_info_update( )
             } else {
                 //Hostile NPC
                 cancel_activity_or_ignore_query( distraction_type::hostile_spotted_far,
-                                                 string_format( _( "Hostile survivor spotted %s!" ),
-                                                                proximity_to_you( u, *new_seen_mon.back() ) ) );
+                                                 string_format( _( "Hostile survivor spotted%s!" ),
+                                                                ( spotted_npc ? " " + proximity_to_you( u, *spotted_npc ) :
+                                                                                "" ) ) );
             }
         } else {
             cancel_activity_or_ignore_query( distraction_type::hostile_spotted_far, _( "Monsters spotted!" ) );
