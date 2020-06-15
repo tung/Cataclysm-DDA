@@ -8620,8 +8620,10 @@ bool game::check_safe_mode_allowed( bool repeat_safe_mode_warnings )
         spotted_creature_name = _( "a survivor" );
         get_safemode().lastmon_whitelist = get_safemode().npc_type_name();
     } else {
-        spotted_creature_name = new_seen_mon.back()->name();
+        const auto spotted_creature = new_seen_mon.back();
+        spotted_creature_name = spotted_creature->name();
         get_safemode().lastmon_whitelist = spotted_creature_name;
+        spotted_creature_name += " " + proximity_to_you( u, *spotted_creature );
     }
 
     std::string whitelist;
