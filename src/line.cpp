@@ -162,7 +162,7 @@ void bresenham( const tripoint &loc1, const tripoint &loc2, int t, int t2,
                 }
                 cur.z += sz;
                 cur.x += sx;
-                t += ax;
+                t += ay;
                 if( !interact( cur ) ) {
                     break;
                 }
@@ -175,7 +175,7 @@ void bresenham( const tripoint &loc1, const tripoint &loc2, int t, int t2,
                 }
                 cur.y += sy;
                 cur.z += sz;
-                t += az;
+                t += ax;
                 if( !interact( cur ) ) {
                     break;
                 }
