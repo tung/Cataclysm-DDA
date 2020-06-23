@@ -6988,7 +6988,7 @@ bool game::take_screenshot( const std::string &/*path*/ ) const
 //helper method so we can keep list_items shorter
 void game::reset_item_list_state( const catacurses::window &window, int height, bool bRadiusSort )
 {
-    const int width = 44;
+    const int width = getmaxx( window );
     for( int i = 1; i < TERMX; i++ ) {
         if( i < width ) {
             mvwputch( window, point( i, 0 ), c_light_gray, LINE_OXOX ); // -
