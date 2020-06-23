@@ -7438,7 +7438,7 @@ game::vmenu_ret game::list_items( const std::vector<map_item_stack> &item_list )
                             if( high ) {
                                 col = c_yellow;
                             } else if( low ) {
-                                col = c_red;
+                                col = c_dark_gray;
                             } else {
                                 col = iter->example->color_in_inventory();
                             }
