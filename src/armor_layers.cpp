@@ -442,7 +442,10 @@ static int worn_part_order( const item & i )
 
 static bool worn_order( const item & l, const item & r )
 {
-    if( ( l.get_covered_body_parts() & r.get_covered_body_parts() ).none() ) {
+    if( worn_part_order( r ) == -1 ) {
+        // Partless comes before parted.
+        return worn_part_order( l ) == -1;
+    } else if( ( l.get_covered_body_parts() & r.get_covered_body_parts() ).none() ) {
         // No parts are shared, so use part ordering.
         return worn_part_order( l ) < worn_part_order( r );
     } else if( l.get_layer() != r.get_layer() ) {
