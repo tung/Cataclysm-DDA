@@ -3714,6 +3714,9 @@ int Character::get_stored_kcal() const
 
 void Character::mod_stored_kcal( int nkcal )
 {
+    if( is_npc() && get_option<bool>( "NO_NPC_FOOD" ) ) {
+        return;
+    }
     set_stored_kcal( stored_calories + nkcal );
 }
 
@@ -3750,6 +3753,9 @@ int Character::get_hunger() const
 
 void Character::mod_hunger( int nhunger )
 {
+    if( is_npc() && get_option<bool>( "NO_NPC_FOOD" ) ) {
+        return;
+    }
     set_hunger( hunger + nhunger );
 }
 
@@ -3901,6 +3907,9 @@ std::pair<std::string, nc_color> Character::get_fatigue_description() const
 void Character::mod_thirst( int nthirst )
 {
     if( has_trait_flag( "NO_THIRST" ) ) {
+        return;
+    }
+    if( is_npc() && get_option<bool>( "NO_NPC_FOOD" ) ) {
         return;
     }
     set_thirst( std::max( -100, thirst + nthirst ) );
