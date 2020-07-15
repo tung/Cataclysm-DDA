@@ -1290,7 +1290,7 @@ void Character::heat_emission( int b, int fuel_energy )
         const int heat_spread = std::max( heat_prod / 10 - heat_level, 1 );
         g->m.emit_field( pos(), hotness, heat_spread );
     }
-    for( const std::pair<body_part, size_t> &bp : bio.info().occupied_bodyparts ) {
+    for( const std::pair<const body_part, size_t> &bp : bio.info().occupied_bodyparts ) {
         add_effect( effect_heating_bionic, 2_seconds, bp.first, false, heat_prod );
     }
 }

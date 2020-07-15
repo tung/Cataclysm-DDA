@@ -714,7 +714,7 @@ std::string input_context::key_bound_to( const std::string &action_descriptor, c
 
 bool input_context::key_is_bound( char key ) const
 {
-    for( const std::string action : registered_actions ) {
+    for( const std::string &action : registered_actions ) {
         for( char k : keys_bound_to( action ) ) {
             if( k == key ) {
                 return true;

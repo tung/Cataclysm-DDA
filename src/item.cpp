@@ -1361,7 +1361,7 @@ const std::map<std::string, dps_comp_data> dps_comp_monsters = {
 std::map<std::string, double> item::dps( const player &guy ) const
 {
     std::map<std::string, double> results;
-    for( const std::pair<std::string, dps_comp_data> &comp_mon : dps_comp_monsters ) {
+    for( const std::pair<const std::string, dps_comp_data> &comp_mon : dps_comp_monsters ) {
         monster test_mon = monster( comp_mon.second.mon_id );
         results[ comp_mon.first ] = effective_dps( guy, test_mon );
     }
@@ -3086,7 +3086,7 @@ void item::bionic_info( std::vector<iteminfo> &info, const iteminfo_query *parts
         info.push_back( iteminfo( "DESCRIPTION",
                                   _( "<bold>Environmental Protection</bold>: " ),
                                   iteminfo::no_newline ) );
-        for( const std::pair< body_part, size_t > &element : bid->env_protec ) {
+        for( const std::pair< const body_part, size_t > &element : bid->env_protec ) {
             info.push_back( iteminfo( "CBM", body_part_name_as_heading( element.first, 1 ),
                                       " <num> ", iteminfo::no_newline, element.second ) );
         }
@@ -3096,7 +3096,7 @@ void item::bionic_info( std::vector<iteminfo> &info, const iteminfo_query *parts
         info.push_back( iteminfo( "DESCRIPTION",
                                   _( "<bold>Bash Protection</bold>: " ),
                                   iteminfo::no_newline ) );
-        for( const std::pair< body_part, size_t > &element : bid->bash_protec ) {
+        for( const std::pair< const body_part, size_t > &element : bid->bash_protec ) {
             info.push_back( iteminfo( "CBM", body_part_name_as_heading( element.first, 1 ),
                                       " <num> ", iteminfo::no_newline, element.second ) );
         }
@@ -3106,7 +3106,7 @@ void item::bionic_info( std::vector<iteminfo> &info, const iteminfo_query *parts
         info.push_back( iteminfo( "DESCRIPTION",
                                   _( "<bold>Cut Protection</bold>: " ),
                                   iteminfo::no_newline ) );
-        for( const std::pair< body_part, size_t > &element : bid->cut_protec ) {
+        for( const std::pair< const body_part, size_t > &element : bid->cut_protec ) {
             info.push_back( iteminfo( "CBM", body_part_name_as_heading( element.first, 1 ),
                                       " <num> ", iteminfo::no_newline, element.second ) );
         }
@@ -3186,7 +3186,7 @@ void item::combat_info( std::vector<iteminfo> &info, const iteminfo_query *parts
                                       iteminfo::lower_is_better, attack_time() ) );
             info.emplace_back( "BASE", _( "Typical damage per second:" ), "" );
             const std::map<std::string, double> &dps_data = dps();
-            for( const std::pair<std::string, double> &dps_entry : dps_data ) {
+            for( const std::pair<const std::string, double> &dps_entry : dps_data ) {
                 const auto &ref_data = dps_comp_monsters.find( dps_entry.first );
                 if( ( ref_data == dps_comp_monsters.end() ) || !ref_data->second.display ) {
                     continue;
