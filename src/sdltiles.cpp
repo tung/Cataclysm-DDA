@@ -3980,16 +3980,13 @@ BitmapFont::BitmapFont( const int w, const int h, const std::string &typeface_pa
     SDL_SetColorKey( asciiload.get(), SDL_TRUE, key );
     SDL_Surface_Ptr ascii_surf[std::tuple_size<decltype( ascii )>::value];
     ascii_surf[0].reset( SDL_ConvertSurface( asciiload.get(), format.get(), 0 ) );
-    SDL_SetSurfaceRLE( ascii_surf[0].get(), 1 );
     asciiload.reset();
 
     for( size_t a = 1; a < std::tuple_size<decltype( ascii )>::value; ++a ) {
         ascii_surf[a].reset( SDL_ConvertSurface( ascii_surf[0].get(), format.get(), 0 ) );
-        SDL_SetSurfaceRLE( ascii_surf[a].get(), 1 );
     }
 
     for( size_t a = 0; a < std::tuple_size<decltype( ascii )>::value - 1; ++a ) {
-        SDL_LockSurface( ascii_surf[a].get() );
         int size = ascii_surf[a]->h * ascii_surf[a]->w;
         Uint32 *pixels = static_cast<Uint32 *>( ascii_surf[a]->pixels );
         Uint32 color = ( windowsPalette[a].r << 16 ) | ( windowsPalette[a].g << 8 ) | windowsPalette[a].b;
@@ -3998,7 +3995,6 @@ BitmapFont::BitmapFont( const int w, const int h, const std::string &typeface_pa
                 pixels[i] = color;
             }
         }
-        SDL_UnlockSurface( ascii_surf[a].get() );
     }
     tilewidth = ascii_surf[0]->w / fontwidth;
 
