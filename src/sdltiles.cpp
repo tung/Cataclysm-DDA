@@ -119,8 +119,8 @@ class Font
          * using (curses) color.
          */
         virtual void OutputChar( const std::string &ch, int x, int y,
-                                 unsigned char color, float opacity = 1.0f ) = 0;
-        virtual void draw_ascii_lines( unsigned char line_id, int drawx, int drawy, int FG ) const;
+                                 int fg, int bg = -1, float opacity = 1.0f ) = 0;
+        virtual void draw_ascii_lines( unsigned char line_id, int drawx, int drawy, int FG, int BG ) const;
         bool draw_window( const catacurses::window &w );
         bool draw_window( const catacurses::window &w, int offsetx, int offsety );
 
@@ -144,7 +144,7 @@ class CachedTTFFont : public Font
 
         bool isGlyphProvided( const std::string &ch ) const override;
         void OutputChar( const std::string &ch, int x, int y,
-                         unsigned char color, float opacity = 1.0f ) override;
+                         int fg, int bg = -1, float opacity = 1.0f ) override;
     protected:
         SDL_Texture_Ptr create_glyph( const std::string &ch, int color );
 
@@ -183,12 +183,13 @@ class BitmapFont : public Font
 
         bool isGlyphProvided( const std::string &ch ) const override;
         void OutputChar( const std::string &ch, int x, int y,
-                         unsigned char color, float opacity = 1.0f ) override;
+                         int fg, int bg = -1, float opacity = 1.0f ) override;
         void OutputChar( int t, int x, int y,
-                         unsigned char color, float opacity = 1.0f );
-        void draw_ascii_lines( unsigned char line_id, int drawx, int drawy, int FG ) const override;
+                         int fg, int bg = -1, float opacity = 1.0f );
+        void draw_ascii_lines( unsigned char line_id, int drawx, int drawy, int FG, int BG ) const override;
     protected:
         std::array<SDL_Texture_Ptr, color_loader<SDL_Color>::COLOR_NAMES_COUNT> ascii;
+        std::array<SDL_Texture_Ptr, color_loader<SDL_Color>::COLOR_NAMES_COUNT> ascii_on_black;
         int tilewidth;
 };
 
@@ -201,7 +202,7 @@ class FontFallbackList : public Font
 
         bool isGlyphProvided( const std::string &ch ) const override;
         void OutputChar( const std::string &ch, int x, int y,
-                         unsigned char color, float opacity = 1.0f ) override;
+                         int fg, int bg = -1, float opacity = 1.0f ) override;
     protected:
         std::vector<std::unique_ptr<Font>> fonts;
         std::map<std::string, std::vector<std::unique_ptr<Font>>::iterator> glyph_font;
@@ -695,9 +696,9 @@ bool CachedTTFFont::isGlyphProvided( const std::string &ch ) const
 }
 
 void CachedTTFFont::OutputChar( const std::string &ch, const int x, const int y,
-                                const unsigned char color, const float opacity )
+                                const int fg, const int bg, const float opacity )
 {
-    key_t    key {ch, static_cast<unsigned char>( color & 0xf )};
+    key_t    key {ch, static_cast<unsigned char>( fg & 0xf )};
 
     auto it = glyph_cache_map.find( key );
     if( it == std::end( glyph_cache_map ) ) {
@@ -712,6 +713,9 @@ void CachedTTFFont::OutputChar( const std::string &ch, const int x, const int y,
     if( !value.texture ) {
         // Nothing we can do here )-:
         return;
+    }
+    if( bg != -1 ) {
+        FillRectDIB( x, y, value.width, fontheight, bg );
     }
     SDL_Rect rect {x, y, value.width, fontheight};
     if( opacity != 1.0f ) {
@@ -924,14 +928,14 @@ bool BitmapFont::isGlyphProvided( const std::string &ch ) const
 }
 
 void BitmapFont::OutputChar( const std::string &ch, const int x, const int y,
-                             const unsigned char color, const float opacity )
+                             const int fg, const int bg, const float opacity )
 {
     const int t = UTF8_getch( ch );
-    BitmapFont::OutputChar( t, x, y, color, opacity );
+    BitmapFont::OutputChar( t, x, y, fg, bg, opacity );
 }
 
 void BitmapFont::OutputChar( const int t, const int x, const int y,
-                             const unsigned char color, const float opacity )
+                             const int fg, const int bg, const float opacity )
 {
     int tt = 0;
     if( t >= 32 && t <= 126 ) {
@@ -953,12 +957,19 @@ void BitmapFont::OutputChar( const int t, const int x, const int y,
         rect.y = y;
         rect.w = fontwidth;
         rect.h = fontheight;
-        if( opacity != 1.0f ) {
-            SDL_SetTextureAlphaMod( ascii[color].get(), opacity * 255 );
-        }
-        RenderCopy( renderer, ascii[color], &src, &rect );
-        if( opacity != 1.0f ) {
-            SDL_SetTextureAlphaMod( ascii[color].get(), 255 );
+        if( opacity == 1.0f && bg == catacurses::black ) {
+            RenderCopy( renderer, ascii_on_black[fg], &src, &rect );
+        } else {
+            if( bg != -1 ) {
+                FillRectDIB( x, y, fontwidth, fontheight, bg );
+            }
+            if( opacity != 1.0f ) {
+                SDL_SetTextureAlphaMod( ascii[fg].get(), opacity * 255 );
+            }
+            RenderCopy( renderer, ascii[fg], &src, &rect );
+            if( opacity != 1.0f ) {
+                SDL_SetTextureAlphaMod( ascii[fg].get(), 255 );
+            }
         }
     } else {
         unsigned char uc = 0;
@@ -999,7 +1010,7 @@ void BitmapFont::OutputChar( const int t, const int x, const int y,
             default:
                 return;
         }
-        draw_ascii_lines( uc, x, y, color );
+        draw_ascii_lines( uc, x, y, fg, bg );
     }
 }
 
@@ -1124,9 +1135,12 @@ void set_displaybuffer_rendertarget()
 }
 
 // line_id is one of the LINE_*_C constants
-// FG is a curses color
-void Font::draw_ascii_lines( unsigned char line_id, int drawx, int drawy, int FG ) const
+// FG and BG are curses colors
+void Font::draw_ascii_lines( unsigned char line_id, int drawx, int drawy, int FG, int BG ) const
 {
+    if( BG != -1 ) {
+        FillRectDIB( drawx, drawy, fontwidth, fontheight, BG );
+    }
     switch( line_id ) {
         // box bottom/top side (horizontal line)
         case LINE_OXOX_C:
@@ -1611,11 +1625,10 @@ bool Font::draw_window( const catacurses::window &w, const int offsetx, const in
                     use_draw_ascii_lines_routine = false;
                     break;
             }
-            FillRectDIB( drawx, drawy, fontwidth * cw, fontheight, BG );
             if( use_draw_ascii_lines_routine ) {
-                draw_ascii_lines( uc, drawx, drawy, FG );
+                draw_ascii_lines( uc, drawx, drawy, FG, BG );
             } else {
-                OutputChar( cell.ch, drawx, drawy, FG );
+                OutputChar( cell.ch, drawx, drawy, FG, BG );
             }
         }
     }
@@ -2485,9 +2498,9 @@ void draw_quick_shortcuts()
                      text_scale;
         }
         text_y = ( WindowHeight - ( height + font->fontheight * text_scale ) * 0.5f ) / text_scale;
-        font->OutputChar( text, text_x + 1, text_y + 1, 0,
+        font->OutputChar( text, text_x + 1, text_y + 1, 0, -1,
                           get_option<int>( "ANDROID_SHORTCUT_OPACITY_SHADOW" ) * 0.01f );
-        font->OutputChar( text, text_x, text_y, get_option<int>( "ANDROID_SHORTCUT_COLOR" ),
+        font->OutputChar( text, text_x, text_y, get_option<int>( "ANDROID_SHORTCUT_COLOR" ), -1,
                           get_option<int>( "ANDROID_SHORTCUT_OPACITY_FG" ) * 0.01f );
         if( hovered ) {
             // draw a second button hovering above the first one
@@ -2507,9 +2520,9 @@ void draw_quick_shortcuts()
                 SDL_RenderSetScale( renderer.get(), text_scale, text_scale );
                 text_x = ( WindowWidth - ( ( font->fontwidth  * hint_length ) * text_scale ) ) * 0.5f / text_scale;
                 text_y = ( WindowHeight - font->fontheight * text_scale ) * 0.5f / text_scale;
-                font->OutputChar( hint_text, text_x + 1, text_y + 1, 0,
+                font->OutputChar( hint_text, text_x + 1, text_y + 1, 0, -1,
                                   get_option<int>( "ANDROID_SHORTCUT_OPACITY_SHADOW" ) * 0.01f );
-                font->OutputChar( hint_text, text_x, text_y, get_option<int>( "ANDROID_SHORTCUT_COLOR" ),
+                font->OutputChar( hint_text, text_x, text_y, get_option<int>( "ANDROID_SHORTCUT_COLOR" ), -1,
                                   get_option<int>( "ANDROID_SHORTCUT_OPACITY_FG" ) * 0.01f );
             }
         }
@@ -3996,61 +4009,72 @@ BitmapFont::BitmapFont( const int w, const int h, const std::string &typeface_pa
             }
         }
     }
+
+    SDL_Surface_Ptr ascii_on_black_surf[std::tuple_size<decltype( ascii_on_black )>::value];
+    for( size_t a = 0; a < std::tuple_size<decltype( ascii_on_black )>::value; ++a ) {
+        ascii_on_black_surf[a].reset( SDL_CreateRGBSurfaceWithFormat( 0, ascii_surf[a]->w, ascii_surf[a]->h,
+                                                                      24, SDL_PIXELFORMAT_RGB888 ) );
+        SDL_FillRect( ascii_on_black_surf[a].get(), nullptr, SDL_MapRGB( ascii_on_black_surf[a]->format, 0, 0, 0 ) );
+        SDL_Rect dest{ 0, 0, 0, 0 };
+        SDL_BlitSurface( ascii_surf[a].get(), nullptr, ascii_on_black_surf[a].get(), &dest );
+    }
+
     tilewidth = ascii_surf[0]->w / fontwidth;
 
-    //convert ascii_surf to SDL_Texture
+    // Convert ascii_surf and ascii_on_black_surf to SDL_Textures.
     for( size_t a = 0; a < std::tuple_size<decltype( ascii )>::value; ++a ) {
         ascii[a] = CreateTextureFromSurface( renderer, ascii_surf[a] );
+        ascii_on_black[a] = CreateTextureFromSurface( renderer, ascii_on_black_surf[a] );
     }
 }
 
-void BitmapFont::draw_ascii_lines( unsigned char line_id, int drawx, int drawy, int FG ) const
+void BitmapFont::draw_ascii_lines( unsigned char line_id, int drawx, int drawy, int FG, int BG ) const
 {
     BitmapFont *t = const_cast<BitmapFont *>( this );
     switch( line_id ) {
         // box bottom/top side (horizontal line)
         case LINE_OXOX_C:
-            t->OutputChar( 0xcd, drawx, drawy, FG );
+            t->OutputChar( 0xcd, drawx, drawy, FG, BG );
             break;
         // box left/right side (vertical line)
         case LINE_XOXO_C:
-            t->OutputChar( 0xba, drawx, drawy, FG );
+            t->OutputChar( 0xba, drawx, drawy, FG, BG );
             break;
         // box top left
         case LINE_OXXO_C:
-            t->OutputChar( 0xc9, drawx, drawy, FG );
+            t->OutputChar( 0xc9, drawx, drawy, FG, BG );
             break;
         // box top right
         case LINE_OOXX_C:
-            t->OutputChar( 0xbb, drawx, drawy, FG );
+            t->OutputChar( 0xbb, drawx, drawy, FG, BG );
             break;
         // box bottom right
         case LINE_XOOX_C:
-            t->OutputChar( 0xbc, drawx, drawy, FG );
+            t->OutputChar( 0xbc, drawx, drawy, FG, BG );
             break;
         // box bottom left
         case LINE_XXOO_C:
-            t->OutputChar( 0xc8, drawx, drawy, FG );
+            t->OutputChar( 0xc8, drawx, drawy, FG, BG );
             break;
         // box bottom north T (left, right, up)
         case LINE_XXOX_C:
-            t->OutputChar( 0xca, drawx, drawy, FG );
+            t->OutputChar( 0xca, drawx, drawy, FG, BG );
             break;
         // box bottom east T (up, right, down)
         case LINE_XXXO_C:
-            t->OutputChar( 0xcc, drawx, drawy, FG );
+            t->OutputChar( 0xcc, drawx, drawy, FG, BG );
             break;
         // box bottom south T (left, right, down)
         case LINE_OXXX_C:
-            t->OutputChar( 0xcb, drawx, drawy, FG );
+            t->OutputChar( 0xcb, drawx, drawy, FG, BG );
             break;
         // box X (left down up right)
         case LINE_XXXX_C:
-            t->OutputChar( 0xce, drawx, drawy, FG );
+            t->OutputChar( 0xce, drawx, drawy, FG, BG );
             break;
         // box bottom east T (left, down, up)
         case LINE_XOXX_C:
-            t->OutputChar( 0xb9, drawx, drawy, FG );
+            t->OutputChar( 0xb9, drawx, drawy, FG, BG );
             break;
         default:
             break;
@@ -4124,7 +4148,7 @@ bool FontFallbackList::isGlyphProvided( const std::string & ) const
 }
 
 void FontFallbackList::OutputChar( const std::string &ch, const int x, const int y,
-                                   const unsigned char color, const float opacity )
+                                   const int fg, const int bg, const float opacity )
 {
     auto cached = glyph_font.find( ch );
     if( cached == glyph_font.end() ) {
@@ -4134,7 +4158,7 @@ void FontFallbackList::OutputChar( const std::string &ch, const int x, const int
             }
         }
     }
-    ( *cached->second )->OutputChar( ch, x, y, color, opacity );
+    ( *cached->second )->OutputChar( ch, x, y, fg, bg, opacity );
 }
 
 static int map_font_width()
