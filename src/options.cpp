@@ -1682,12 +1682,12 @@ void options_manager::add_options_graphics()
 
     add( "FONT_WIDTH", "graphics", translate_marker( "Font width" ),
          translate_marker( "Set the font width.  Requires restart." ),
-         8, 100, 8, COPT_CURSES_HIDE
+         6, 100, 8, COPT_CURSES_HIDE
        );
 
     add( "FONT_HEIGHT", "graphics", translate_marker( "Font height" ),
          translate_marker( "Set the font height.  Requires restart." ),
-         8, 100, 16, COPT_CURSES_HIDE
+         6, 100, 16, COPT_CURSES_HIDE
        );
 
     add( "FONT_SIZE", "graphics", translate_marker( "Font size" ),
@@ -1697,12 +1697,12 @@ void options_manager::add_options_graphics()
 
     add( "MAP_FONT_WIDTH", "graphics", translate_marker( "Map font width" ),
          translate_marker( "Set the map font width.  Requires restart." ),
-         8, 100, 16, COPT_CURSES_HIDE
+         6, 100, 16, COPT_CURSES_HIDE
        );
 
     add( "MAP_FONT_HEIGHT", "graphics", translate_marker( "Map font height" ),
          translate_marker( "Set the map font height.  Requires restart." ),
-         8, 100, 16, COPT_CURSES_HIDE
+         6, 100, 16, COPT_CURSES_HIDE
        );
 
     add( "MAP_FONT_SIZE", "graphics", translate_marker( "Map font size" ),
@@ -1712,12 +1712,12 @@ void options_manager::add_options_graphics()
 
     add( "OVERMAP_FONT_WIDTH", "graphics", translate_marker( "Overmap font width" ),
          translate_marker( "Set the overmap font width.  Requires restart." ),
-         8, 100, 16, COPT_CURSES_HIDE
+         6, 100, 16, COPT_CURSES_HIDE
        );
 
     add( "OVERMAP_FONT_HEIGHT", "graphics", translate_marker( "Overmap font height" ),
          translate_marker( "Set the overmap font height.  Requires restart." ),
-         8, 100, 16, COPT_CURSES_HIDE
+         6, 100, 16, COPT_CURSES_HIDE
        );
 
     add( "OVERMAP_FONT_SIZE", "graphics", translate_marker( "Overmap font size" ),
