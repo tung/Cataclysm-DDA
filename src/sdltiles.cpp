@@ -3983,40 +3983,98 @@ int get_scaling_factor()
 BitmapFont::BitmapFont( const int w, const int h, const std::string &typeface_path )
     : Font( w, h )
 {
+    int size;
+
     dbg( D_INFO ) << "Loading bitmap font [" + typeface_path + "].";
     SDL_Surface_Ptr asciiload = load_image( typeface_path.c_str() );
     assert( asciiload );
     if( asciiload->w * asciiload->h < ( fontwidth * fontheight * 256 ) ) {
         throw std::runtime_error( "bitmap for font is to small" );
     }
-    Uint32 key = SDL_MapRGB( asciiload->format, 0xFF, 0, 0xFF );
-    SDL_SetColorKey( asciiload.get(), SDL_TRUE, key );
+
     SDL_Surface_Ptr ascii_surf[std::tuple_size<decltype( ascii )>::value];
-    ascii_surf[0].reset( SDL_ConvertSurface( asciiload.get(), format.get(), 0 ) );
-    asciiload.reset();
+    SDL_Surface_Ptr ascii_on_black_surf[std::tuple_size<decltype( ascii_on_black )>::value];
 
-    for( size_t a = 1; a < std::tuple_size<decltype( ascii )>::value; ++a ) {
-        ascii_surf[a].reset( SDL_ConvertSurface( ascii_surf[0].get(), format.get(), 0 ) );
-    }
+    SDL_Surface_Ptr first_pixel( SDL_CreateRGBSurfaceWithFormat( 0, 1, 1, 24, SDL_PIXELFORMAT_RGB888 ) );
+    SDL_Rect default_dest{ 0, 0, 0, 0 };
+    SDL_BlitSurface( asciiload.get(), nullptr, first_pixel.get(), &default_dest );
+    Uint32 key = SDL_MapRGB( asciiload->format, 0xFF, 0, 0xFF );
 
-    for( size_t a = 0; a < std::tuple_size<decltype( ascii )>::value - 1; ++a ) {
-        int size = ascii_surf[a]->h * ascii_surf[a]->w;
-        Uint32 *pixels = static_cast<Uint32 *>( ascii_surf[a]->pixels );
-        Uint32 color = ( windowsPalette[a].r << 16 ) | ( windowsPalette[a].g << 8 ) | windowsPalette[a].b;
-        for( int i = 0; i < size; i++ ) {
-            if( pixels[i] == 0xFFFFFF ) {
-                pixels[i] = color;
+    if( static_cast<Uint32 *>( first_pixel->pixels )[0] == key ) {
+        // white-on-magenta font image with no blending
+        SDL_SetColorKey( asciiload.get(), SDL_TRUE, key );
+        ascii_surf[0].reset( SDL_ConvertSurface( asciiload.get(), format.get(), 0 ) );
+
+        for( size_t a = 1; a < std::tuple_size<decltype( ascii )>::value; ++a ) {
+            ascii_surf[a].reset( SDL_ConvertSurface( ascii_surf[0].get(), format.get(), 0 ) );
+        }
+
+        for( size_t a = 0; a < std::tuple_size<decltype( ascii )>::value - 1; ++a ) {
+            size = ascii_surf[a]->h * ascii_surf[a]->w;
+            Uint32 *pixels = static_cast<Uint32 *>( ascii_surf[a]->pixels );
+            Uint32 color = ( windowsPalette[a].r << 16 ) | ( windowsPalette[a].g << 8 ) | windowsPalette[a].b;
+            for( int i = 0; i < size; i++ ) {
+                if( pixels[i] == 0xFFFFFF ) {
+                    pixels[i] = color;
+                }
             }
         }
-    }
 
-    SDL_Surface_Ptr ascii_on_black_surf[std::tuple_size<decltype( ascii_on_black )>::value];
-    for( size_t a = 0; a < std::tuple_size<decltype( ascii_on_black )>::value; ++a ) {
-        ascii_on_black_surf[a].reset( SDL_CreateRGBSurfaceWithFormat( 0, ascii_surf[a]->w, ascii_surf[a]->h,
-                                                                      24, SDL_PIXELFORMAT_RGB888 ) );
-        SDL_FillRect( ascii_on_black_surf[a].get(), nullptr, SDL_MapRGB( ascii_on_black_surf[a]->format, 0, 0, 0 ) );
-        SDL_Rect dest{ 0, 0, 0, 0 };
-        SDL_BlitSurface( ascii_surf[a].get(), nullptr, ascii_on_black_surf[a].get(), &dest );
+        for( size_t a = 0; a < std::tuple_size<decltype( ascii_on_black )>::value; ++a ) {
+            ascii_on_black_surf[a].reset( SDL_CreateRGBSurfaceWithFormat( 0, ascii_surf[a]->w, ascii_surf[a]->h,
+                                                                          24, SDL_PIXELFORMAT_RGB888 ) );
+            SDL_FillRect( ascii_on_black_surf[a].get(), nullptr, SDL_MapRGB( ascii_on_black_surf[a]->format, 0, 0, 0 ) );
+            SDL_BlitSurface( ascii_surf[a].get(), nullptr, ascii_on_black_surf[a].get(), &default_dest );
+        }
+    } else {
+        // white-on-black font image with blending represented as closeness to black
+        for( size_t a = 0; a < std::tuple_size<decltype( ascii )>::value; ++a ) {
+            int size;
+
+            // Create the bitmap glyphs with transparent backgrounds.
+            ascii_surf[a].reset( SDL_CreateRGBSurfaceWithFormat( 0, asciiload->w, asciiload->h,
+                                                                 32, SDL_PIXELFORMAT_RGBA8888 ) );
+            SDL_BlitSurface( asciiload.get(), nullptr, ascii_surf[a].get(), &default_dest );
+
+            Uint32 *as_pixels = static_cast<Uint32 *>( ascii_surf[a]->pixels );
+            size = ascii_surf[a]->w * ascii_surf[a]->h;
+            for( int i = 0; i < size; ++i ) {
+                Uint8 r, g, b;
+                SDL_GetRGB( as_pixels[i], ascii_surf[a]->format, &r, &g, &b );
+                if( r == 0 && g == 0 && b == 0 ) {
+                    as_pixels[i] = SDL_MapRGBA( ascii_surf[a]->format, 0, 0, 0, 0 );
+                } else {
+                    // Use grayscale to determine per-pixel alpha.
+                    int alpha_25500 = r * 30 + g * 59 + b * 11;
+                    as_pixels[i] = SDL_MapRGBA( ascii_surf[a]->format, windowsPalette[a].r,
+                                                windowsPalette[a].g, windowsPalette[a].b,
+                                                alpha_25500 / 100 );
+                }
+            }
+
+            // Create the bitmap glyphs with black backgrounds.
+            ascii_on_black_surf[a].reset( SDL_CreateRGBSurfaceWithFormat( 0, asciiload->w, asciiload->h,
+                                                                          24, SDL_PIXELFORMAT_RGB888 ) );
+            if( windowsPalette[a].r == windowsPalette[a].g && windowsPalette[a].g == windowsPalette[a].b ) {
+                // Pure grayscale palette color, so just scale the color intensity
+                // to preserve possible sub-pixel rendering details.
+                SDL_BlitSurface( asciiload.get(), nullptr, ascii_on_black_surf[a].get(), &default_dest );
+                Uint32 *aobs_pixels = static_cast<Uint32 *>( ascii_on_black_surf[a]->pixels );
+                size = ascii_on_black_surf[a]->w * ascii_on_black_surf[a]->h;
+                for( int i = 0; i < size; ++i ) {
+                    Uint8 r, g, b;
+                    SDL_GetRGB( aobs_pixels[i], ascii_on_black_surf[a]->format, &r, &g, &b );
+                    r = r * windowsPalette[a].r / 255;
+                    g = g * windowsPalette[a].g / 255;
+                    b = b * windowsPalette[a].b / 255;
+                    aobs_pixels[i] = SDL_MapRGB( ascii_on_black_surf[a]->format, r, g, b );
+                }
+            } else {
+                SDL_FillRect( ascii_on_black_surf[a].get(), nullptr,
+                              SDL_MapRGB( ascii_on_black_surf[a]->format, 0, 0, 0 ) );
+                SDL_BlitSurface( ascii_surf[a].get(), nullptr, ascii_on_black_surf[a].get(), &default_dest );
+            }
+        }
     }
 
     tilewidth = ascii_surf[0]->w / fontwidth;
