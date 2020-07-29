@@ -1445,6 +1445,7 @@ bool game::do_turn()
                 sounds::process_sound_markers( &u );
                 if( !u.activity && !u.has_distant_destination() && uquit != QUIT_WATCH ) {
                     draw();
+                    sounds::reset_also_u_volume();
                 }
 
                 if( handle_action() ) {
@@ -1555,6 +1556,7 @@ bool game::do_turn()
     if( player_is_sleeping ) {
         if( calendar::once_every( 30_minutes ) || !player_was_sleeping ) {
             draw();
+            sounds::reset_also_u_volume();
             //Putting this in here to save on checking
             if( calendar::once_every( 1_hours ) ) {
                 add_artifact_dreams( );

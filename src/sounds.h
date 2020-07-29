@@ -65,6 +65,7 @@ void add_footstep( const tripoint &p, int volume, int distance, monster *source,
 /* Make sure the sounds are all reset when we start a new game. */
 void reset_sounds();
 void reset_markers();
+void reset_also_u_volume();
 
 // Methods for processing sound events, these
 // process_sounds() applies the sounds since the last turn to monster AI,

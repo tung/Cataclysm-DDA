@@ -136,6 +136,38 @@ static std::vector<std::pair<tripoint, int>> recent_sounds;
 static std::vector<std::pair<tripoint, sound_event>> sounds_since_last_turn;
 // The sound events currently displayed to the player.
 static std::unordered_map<tripoint, sound_event> sound_markers;
+// Maximum noise of sounds at or next to player at the moment they happened.
+static int also_u_volume = 0;
+
+// Players in moving vehicles can move away from their own sounds before the
+// noise they make is properly shown in the sidebar, so track that noise.
+static void update_also_u_volume( const tripoint &p, int vol )
+{
+    // The following is a stripped-down version of the player sound meter
+    // changing logic in sounds::process_sound_markers.
+
+    if( vol <= 0 || g->u.is_deaf() ) {
+        return;
+    }
+
+    const tripoint &u_pos = g->u.pos();
+    if( p.z != u_pos.z ) {
+        return;
+    }
+
+    const int weather_vol = weather::sound_attn( g->weather.weather );
+    const float vol_multi = g->u.hearing_ability();
+    const int distance_to_sound = rl_dist( u_pos, p );
+    const int heard_vol = static_cast<int>( ( vol - weather_vol ) * vol_multi ) -
+                          distance_to_sound;
+    if( heard_vol <= 0 && p != u_pos ) {
+        return;
+    }
+
+    if( distance_to_sound <= 1 && also_u_volume < heard_vol ) {
+        also_u_volume = heard_vol;
+    }
+}
 
 void sounds::ambient_sound( const tripoint &p, int vol, sound_t category,
                             const std::string &description )
@@ -159,6 +191,7 @@ void sounds::sound( const tripoint &p, int vol, sound_t category, const std::str
     sounds_since_last_turn.emplace_back( std::make_pair( p,
                                          sound_event {vol, category, description, ambient,
                                                  false, id, variant} ) );
+    update_also_u_volume( p, vol );
 }
 
 void sounds::sound( const tripoint &p, int vol, sound_t category, const translation &description,
@@ -348,6 +381,11 @@ static bool describe_sound( sounds::sound_t category, bool from_player_position 
 
 void sounds::process_sound_markers( player *p )
 {
+    // Account for noises made near the player before being moved by e.g. a vehicle.
+    if( p->is_player() && p->volume < also_u_volume ) {
+        p->volume = also_u_volume;
+    }
+
     bool is_deaf = p->is_deaf();
     const float volume_multiplier = p->hearing_ability();
     const int weather_vol = weather::sound_attn( g->weather.weather );
@@ -524,11 +562,17 @@ void sounds::reset_sounds()
     recent_sounds.clear();
     sounds_since_last_turn.clear();
     sound_markers.clear();
+    also_u_volume = 0;
 }
 
 void sounds::reset_markers()
 {
     sound_markers.clear();
+}
+
+void sounds::reset_also_u_volume()
+{
+    also_u_volume = 0;
 }
 
 std::vector<tripoint> sounds::get_footstep_markers()
