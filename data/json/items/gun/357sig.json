@@ -29,6 +29,7 @@
     "weight": "660 g",
     "volume": "443 ml",
     "ammo": [ "357sig" ],
+    "magazine_well": 1,
     "magazines": [ [ "357sig", [ "glock40mag", "glock40bigmag" ] ] ]
   },
   {
