@@ -15,7 +15,7 @@
       [ "stock mount", 1 ],
       [ "underbarrel mount", 1 ]
     ],
-    "relative": { "weight": -500, "volume": -4, "range": -2, "ranged_damage": -4 },
+    "relative": { "weight": -1300, "volume": -1, "range": -2, "ranged_damage": -4 },
     "proportional": { "bashing": 0.6, "dispersion": 1.35, "reload": 0.6 }
   },
   {
@@ -36,8 +36,8 @@
     "reload_noise_volume": 10,
     "name": { "str": "flintlock pistol" },
     "description": "A beautifully decorated flintlock pistol.  If using this doesn't make you feel a pirate, nothing will.",
-    "weight": "753 g",
-    "volume": "750 ml",
+    "weight": "1000 g",
+    "volume": "390 ml",
     "price": 35000,
     "to_hit": -1,
     "bashing": 5,
@@ -70,7 +70,7 @@
     "reload_noise_volume": 10,
     "name": { "str": "flintlock rifle" },
     "description": "For once, something *good* came back from the dead.  This ancient design lacks the fire-rate of modern weapons, but packs as much punch as the best of 'em and rewards the skilled shooter with easily-crafted ammunition.",
-    "weight": "1950 g",
+    "weight": "4900 g",
     "volume": "2500 ml",
     "price": 41000,
     "to_hit": -1,
