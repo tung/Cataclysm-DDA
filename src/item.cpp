@@ -4642,6 +4642,9 @@ units::mass item::weight( bool include_contents, bool integral ) const
     }
 
     if( is_gun() ) {
+        if( magazine_current() != nullptr ) {
+            ret += magazine_current()->weight();
+        }
         for( const item *elem : gunmods() ) {
             ret += elem->weight( true, true );
         }
