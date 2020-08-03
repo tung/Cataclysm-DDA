@@ -4649,11 +4649,12 @@ units::mass item::weight( bool include_contents, bool integral ) const
     }
 
     if( is_gun() ) {
-        if( magazine_current() != nullptr ) {
-            ret += magazine_current()->weight();
-        }
-        for( const item *elem : gunmods() ) {
-            ret += elem->weight( true, true );
+        for( const item &elem : contents ) {
+            if( elem.is_magazine() || elem.has_flag( flag_CASING ) ) {
+                ret += elem.weight();
+            } else if ( elem.is_gunmod() ) {
+                ret += elem.weight( true, true );
+            }
         }
     } else if( include_contents ) {
         for( const item &elem : contents ) {
