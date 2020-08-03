@@ -557,7 +557,7 @@ double Character::aim_speed_encumbrance_modifier() const
 double Character::aim_cap_from_volume( const item &gun ) const
 {
     skill_id gun_skill = gun.gun_skill();
-    double aim_cap = std::min( 49.0, 49.0 - static_cast<float>( gun.volume() / 75_ml ) );
+    double aim_cap = std::min( 49.0, 49.0 - units::to_milliliter( gun.volume() ) / 750.0 );
     // TODO: also scale with skill level.
     if( gun_skill == "smg" ) {
         aim_cap = std::max( 12.0, aim_cap );
@@ -573,6 +573,22 @@ double Character::aim_cap_from_volume( const item &gun ) const
         aim_cap = std::max( 10.0, aim_cap );
     }
     return aim_cap;
+}
+
+static double aim_speed_gun_weight_factor( const item &gun )
+{
+    units::mass wt = gun.weight();
+    if( gun.gun_skill() == "archery" ) {
+        // Almost all bows are pistol-weight.
+        // Change their effective weight to match heavy rifles.
+        wt += 5000_gram;
+    }
+    if( wt > 40000_gram ) {
+        return 3.0;
+    } else if( wt > 6000_gram ) {
+        return 3.0 + 1.0 * units::to_gram( 40000_gram - wt ) / 34000.0;
+    }
+    return 4.0 + 4.0 * units::to_gram( 6000_gram - wt ) / 6000.0;
 }
 
 double Character::aim_per_move( const item &gun, double recoil ) const
@@ -611,8 +627,8 @@ double Character::aim_per_move( const item &gun, double recoil ) const
 
     aim_speed = std::min( aim_speed, aim_cap_from_volume( gun ) );
 
-    // Just a raw scaling factor.
-    aim_speed *= 6.5;
+    // Scaling factor based on gun weight.
+    aim_speed *= aim_speed_gun_weight_factor( gun );
 
     // Scale rate logistically as recoil goes from MAX_RECOIL to 0.
     aim_speed *= 1.0 - logarithmic_range( 0, MAX_RECOIL, recoil );
