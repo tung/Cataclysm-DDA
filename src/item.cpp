@@ -3301,21 +3301,6 @@ void item::contents_info( std::vector<iteminfo> &info, const iteminfo_query *par
         return;
     }
     const std::string space = "  ";
-    for( const item *mod : is_gun() ? gunmods() : toolmods() ) {
-        std::string mod_str;
-        if( mod->type->gunmod ) {
-            if( mod->is_irremovable() ) {
-                mod_str = _( "Integrated mod: " );
-            } else {
-                mod_str = _( "Mod: " );
-            }
-            mod_str += string_format( "<bold>%s</bold> (%s) ", mod->tname(),
-                                      mod->type->gunmod->location.name() );
-        }
-        insert_separation_line( info );
-        info.emplace_back( "DESCRIPTION", mod_str );
-        info.emplace_back( "DESCRIPTION", mod->type->description.translated() );
-    }
     bool contents_header = false;
     for( const item &contents_item : contents ) {
         if( !contents_item.type->mod && !( is_gun() && contents_item.has_flag( flag_CASING ) ) ) {
@@ -3724,6 +3709,28 @@ std::string item::info( std::vector<iteminfo> &info, const iteminfo_query *parts
     }
     if( gun != nullptr ) {
         gun_info( gun, info, parts, batch, debug );
+    }
+
+    // Moved out from item::contents_info() to put gun mod descriptions after
+    // the gun mod summary.  This is only here because I don't want to spend an
+    // extra hour recompiling the entire game to declare a helper method in
+    // item.h that would only have been used internally anyway.
+    if ( !contents.empty() && parts->test( iteminfo_parts::DESCRIPTION_CONTENTS ) ) {
+        for( const item *mod : is_gun() ? gunmods() : toolmods() ) {
+            std::string mod_str;
+            if( mod->is_irremovable() ) {
+                mod_str = _( "Integrated mod: " );
+            } else {
+                mod_str = _( "Mod: " );
+            }
+            mod_str += string_format( "<bold>%s</bold>", mod->tname() );
+            if( mod->type->gunmod ) {
+                mod_str += string_format( " (%s)", mod->type->gunmod->location.name() );
+            }
+            insert_separation_line( info );
+            info.emplace_back( "DESCRIPTION", mod_str );
+            info.emplace_back( "DESCRIPTION", mod->type->description.translated() );
+        }
     }
 
     gunmod_info( info, parts, batch, debug );
