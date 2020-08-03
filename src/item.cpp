@@ -3318,7 +3318,7 @@ void item::contents_info( std::vector<iteminfo> &info, const iteminfo_query *par
     }
     bool contents_header = false;
     for( const item &contents_item : contents ) {
-        if( !contents_item.type->mod ) {
+        if( !contents_item.type->mod && !( is_gun() && contents_item.has_flag( flag_CASING ) ) ) {
             if( !contents_header ) {
                 insert_separation_line( info );
                 info.emplace_back( "DESCRIPTION", _( "<bold>Contents</bold>:" ) );
