@@ -1151,25 +1151,17 @@ void advanced_inventory::display()
         }
 
         const std::string action = is_processing() ? "MOVE_ALL_ITEMS" : ctxt.handle_input();
-        if( show_non_inv_item_info && !is_processing() ) {
+        const bool non_inv_item_info_bypass_action =
+            action == "HELP_KEYBINDINGS" ||
+            action == "UP" ||
+            action == "DOWN" ||
+            action == "CATEGORY_SELECTION";
+
+        if( show_non_inv_item_info && !non_inv_item_info_bypass_action && !is_processing() ) {
             if ( action == "PAGE_DOWN" ) {
                 non_inv_item_info_scroll++;
             } else if ( action == "PAGE_UP" ) {
                 non_inv_item_info_scroll--;
-            } else if ( action == "DOWN" ) {
-                if( inCategoryMode ) {
-                    spane.scroll_category( +1 );
-                } else {
-                    spane.scroll_by( +1 );
-                }
-                non_inv_item_info_scroll = 0;
-            } else if ( action == "UP" ) {
-                if( inCategoryMode ) {
-                    spane.scroll_category( -1 );
-                } else {
-                    spane.scroll_by( -1 );
-                }
-                non_inv_item_info_scroll = 0;
             } else {
                 show_non_inv_item_info = false;
                 redraw = true;
@@ -1494,11 +1486,17 @@ void advanced_inventory::display()
             } else {
                 spane.scroll_by( +1 );
             }
+            if( show_non_inv_item_info ) {
+                non_inv_item_info_scroll = 0;
+            }
         } else if( action == "UP" ) {
             if( inCategoryMode ) {
                 spane.scroll_category( -1 );
             } else {
                 spane.scroll_by( -1 );
+            }
+            if( show_non_inv_item_info ) {
+                non_inv_item_info_scroll = 0;
             }
         } else if( action == "LEFT" ) {
             src = left;
