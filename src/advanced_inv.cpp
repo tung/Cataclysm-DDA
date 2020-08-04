@@ -1091,6 +1091,9 @@ void advanced_inventory::display()
     recalc = true;
     redraw = true;
 
+    bool show_non_inv_item_info = false;
+    int non_inv_item_info_scroll = 0;
+
     while( !exit ) {
         if( g->u.moves < 0 ) {
             do_return_entry();
@@ -1129,8 +1132,49 @@ void advanced_inventory::display()
         advanced_inv_listitem *sitem = spane.get_cur_item_ptr();
         aim_location changeSquare = NUM_AIM_LOCATIONS;
 
+        const int info_width = w_width / 2;
+        const int info_startx = colstart + ( src == advanced_inventory::side::left ? info_width : 0 );
+        if( show_non_inv_item_info ) {
+            if( sitem == nullptr || !sitem->is_item_entry() ) {
+                show_non_inv_item_info = false;
+            } else {
+                item &it = *sitem->items.front();
+                std::vector<iteminfo> vThisItem;
+                std::vector<iteminfo> vDummy;
+                it.info( true, vThisItem );
+
+                item_info_data data( it.tname(), it.type_name(), vThisItem, vDummy, non_inv_item_info_scroll );
+                data.without_getch = true;
+
+                draw_item_info( info_startx, info_width, 0, 0, data );
+            }
+        }
+
         const std::string action = is_processing() ? "MOVE_ALL_ITEMS" : ctxt.handle_input();
-        if( action == "CATEGORY_SELECTION" ) {
+        if( show_non_inv_item_info && !is_processing() ) {
+            if ( action == "PAGE_DOWN" ) {
+                non_inv_item_info_scroll++;
+            } else if ( action == "PAGE_UP" ) {
+                non_inv_item_info_scroll--;
+            } else if ( action == "DOWN" ) {
+                if( inCategoryMode ) {
+                    spane.scroll_category( +1 );
+                } else {
+                    spane.scroll_by( +1 );
+                }
+                non_inv_item_info_scroll = 0;
+            } else if ( action == "UP" ) {
+                if( inCategoryMode ) {
+                    spane.scroll_category( -1 );
+                } else {
+                    spane.scroll_by( -1 );
+                }
+                non_inv_item_info_scroll = 0;
+            } else {
+                show_non_inv_item_info = false;
+                redraw = true;
+            }
+        } else if( action == "CATEGORY_SELECTION" ) {
             inCategoryMode = !inCategoryMode;
             // We redraw to force the color change of the highlighted line and header text.
             spane.redraw = true;
@@ -1408,9 +1452,6 @@ void advanced_inventory::display()
             if( sitem == nullptr || !sitem->is_item_entry() ) {
                 continue;
             }
-            int ret = 0;
-            const int info_width = w_width / 2;
-            const int info_startx = colstart + ( src == advanced_inventory::side::left ? info_width : 0 );
             if( spane.get_area() == AIM_INVENTORY || spane.get_area() == AIM_WORN ) {
                 int idx = spane.get_area() == AIM_INVENTORY ? sitem->idx :
                           player::worn_position_to_index( sitem->idx );
@@ -1423,8 +1464,8 @@ void advanced_inventory::display()
                 // "return to AIM".
                 do_return_entry();
                 assert( g->u.has_activity( ACT_ADV_INVENTORY ) );
-                ret = g->inventory_item_menu( loc, info_startx, info_width,
-                                              src == advanced_inventory::side::left ? game::LEFT_OF_INFO : game::RIGHT_OF_INFO );
+                g->inventory_item_menu( loc, info_startx, info_width,
+                                        src == advanced_inventory::side::left ? game::LEFT_OF_INFO : game::RIGHT_OF_INFO );
                 if( !g->u.has_activity( ACT_ADV_INVENTORY ) ) {
                     exit = true;
                 } else {
@@ -1435,24 +1476,12 @@ void advanced_inventory::display()
                     g->u.inv.restack( g->u );
                 }
                 recalc = true;
+                // item info window overwrote the other pane and the header
+                redraw = true;
             } else {
-                item &it = *sitem->items.front();
-                std::vector<iteminfo> vThisItem;
-                std::vector<iteminfo> vDummy;
-                it.info( true, vThisItem );
-
-                item_info_data data( it.tname(), it.type_name(), vThisItem, vDummy );
-                data.handle_scrolling = true;
-
-                ret = draw_item_info( info_startx, info_width, 0, 0, data ).get_first_input();
+                show_non_inv_item_info = true;
+                non_inv_item_info_scroll = 0;
             }
-            if( ret == KEY_NPAGE || ret == KEY_DOWN ) {
-                spane.scroll_by( +1 );
-            } else if( ret == KEY_PPAGE || ret == KEY_UP ) {
-                spane.scroll_by( -1 );
-            }
-            // item info window overwrote the other pane and the header
-            redraw = true;
         } else if( action == "QUIT" ) {
             exit = true;
         } else if( action == "PAGE_DOWN" ) {
