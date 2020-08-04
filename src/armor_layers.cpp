@@ -798,6 +798,13 @@ void player::sort_armor()
             // Copy to a vector because we need random access.
             std::vector<item> worn_copy( worn.begin(), worn.end() );
 
+            // Start off by sorting purely by layer.
+            std::stable_sort( worn_copy.begin(), worn_copy.end(),
+            []( const item & l, const item & r ) {
+                return l.get_layer() < r.get_layer();
+            }
+                            );
+
             // Shuffle worn items into order so e.g. helmet appears near the
             // top, boots near the bottom.
             bool still_sorting = true;
