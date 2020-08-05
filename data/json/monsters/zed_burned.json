@@ -35,6 +35,7 @@
       "HEARS",
       "STUMBLES",
       "POISON",
+      "GRABS",
       "NO_BREATHE",
       "REVIVES",
       "REVIVES_HEALTHY",
@@ -73,7 +74,7 @@
     "vision_day": 10,
     "vision_night": 3,
     "harvest": "zombie",
-    "special_attacks": [ [ "SMASH", 30 ] ],
+    "special_attacks": [ [ "SMASH", 30 ], [ "GRAB", 7 ] ],
     "death_function": [ "SMOKEBURST", "NORMAL" ],
     "upgrades": { "half_life": 21, "into_group": "GROUP_ZOMBIE_BRUTE" },
     "flags": [ "SEES", "HEARS", "STUMBLES", "POISON", "BLEED", "NO_BREATHE", "REVIVES", "REVIVES_HEALTHY", "NO_NECRO", "FILTHY" ]
@@ -106,6 +107,7 @@
     "vision_day": 10,
     "vision_night": 3,
     "harvest": "zombie",
+    "special_attacks": [ [ "GRAB", 7 ] ],
     "death_function": [ "SMOKEBURST", "NORMAL" ],
     "upgrades": { "half_life": 14, "into_group": "GROUP_ZOMBIE_UPGRADE" },
     "flags": [ "SEES", "HEARS", "STUMBLES", "POISON", "BLEED", "NO_BREATHE", "REVIVES", "REVIVES_HEALTHY", "NO_NECRO", "FILTHY" ]

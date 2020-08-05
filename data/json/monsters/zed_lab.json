@@ -80,7 +80,7 @@
     "vision_day": 30,
     "vision_night": 3,
     "harvest": "zombie",
-    "special_attacks": [ [ "scratch", 10 ] ],
+    "special_attacks": [ [ "GRAB", 10 ], [ "scratch", 10 ] ],
     "death_drops": "mon_zombie_labsecurity_death_drops",
     "death_function": [ "NORMAL" ],
     "upgrades": { "half_life": 28, "into_group": "GROUP_SOLDIER_UPGRADE" },
