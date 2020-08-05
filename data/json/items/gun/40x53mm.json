@@ -7,7 +7,7 @@
     "name": { "str": "Mark 19 grenade launcher" },
     "description": "A heavy, tripod-mounted belt-fed grenade launcher used by the US Military since the start of the Cold War all the way to the cataclysm, and if you can find some 40mm grenades, maybe even beyond.",
     "weight": "35200 g",
-    "volume": "4 L",
+    "volume": "41930 ml",
     "price": 1650000,
     "to_hit": -1,
     "bashing": 14,
