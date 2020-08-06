@@ -327,7 +327,7 @@
     "nested_mapgen_id": "lab_north_doors",
     "object": {
       "mapgensize": [ 2, 2 ],
-      "place_terrain": [ { "ter": "t_door_metal_lab_c", "x": 0, "y": 0 }, { "ter": "t_door_metal_lab_c", "x": 1, "y": 0 } ]
+      "place_terrain": [ { "ter": "t_door_glass_frosted_lab_c", "x": 0, "y": 0 }, { "ter": "t_door_glass_frosted_lab_c", "x": 1, "y": 0 } ]
     }
   }
 ]
