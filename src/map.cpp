@@ -3979,7 +3979,8 @@ item &map::spawn_an_item( const tripoint &p, item new_item,
     return add_item_or_charges( p, new_item );
 }
 
-std::vector<item *> map::spawn_items( const tripoint &p, const std::vector<item> &new_items )
+std::vector<item *> map::spawn_items( const tripoint &p, const std::vector<item> &new_items,
+                                      int chance )
 {
     std::vector<item *> ret;
     if( !inbounds( p ) || has_flag( "DESTROY_ITEM", p ) ) {
@@ -3987,7 +3988,9 @@ std::vector<item *> map::spawn_items( const tripoint &p, const std::vector<item>
     }
     const bool swimmable = has_flag( "SWIMMABLE", p );
     for( const item &new_item : new_items ) {
-
+        if( rng( 1, 100 ) > chance ) {
+            continue;
+        }
         if( new_item.made_of( LIQUID ) && swimmable ) {
             continue;
         }

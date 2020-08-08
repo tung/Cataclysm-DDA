@@ -1121,13 +1121,16 @@ class map
         * @param loc Current location of items
         * @param p Destination of items
         * @param turn The birthday that the created items shall have.
+        * @param chance Chance of placing items in percent.
         * @return Vector of pointers to placed items (can be empty, but no nulls).
         */
         std::vector<item *> put_items_from_loc( const items_location &loc, const tripoint &p,
-                                                const time_point &turn = calendar::start_of_cataclysm );
+                                                const time_point &turn = calendar::start_of_cataclysm,
+                                                int chance = 100 );
 
         // Similar to spawn_an_item, but spawns a list of items, or nothing if the list is empty.
-        std::vector<item *> spawn_items( const tripoint &p, const std::vector<item> &new_items );
+        std::vector<item *> spawn_items( const tripoint &p, const std::vector<item> &new_items,
+                                         int chance = 100 );
         void spawn_items( const point &p, const std::vector<item> &new_items ) {
             spawn_items( tripoint( p, abs_sub.z ), new_items );
         }

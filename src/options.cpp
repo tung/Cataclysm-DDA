@@ -2027,6 +2027,11 @@ void options_manager::add_options_world_default()
          0.01, 10.0, 1.0, 0.01
        );
 
+    add( "HOUSE_ITEM_SPAWNRATE", "world_default", translate_marker( "House item spawn scaling factor" ),
+         translate_marker( "A scaling factor that determines density of item spawns in houses.  Compounds with item spawn scaling factor, e.g. setting both to 0.5 spawns a quarter of the usual items in houses." ),
+         0.01, 1.0, 1.0, 0.01
+       );
+
     add( "NPC_DENSITY", "world_default", translate_marker( "NPC spawn rate scaling factor" ),
          translate_marker( "A scaling factor that determines density of dynamic NPC spawns." ),
          0.0, 100.0, 0.1, 0.01

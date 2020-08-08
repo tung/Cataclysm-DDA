@@ -1053,7 +1053,16 @@ class jmapgen_item_group : public jmapgen_piece
             repeat = jmapgen_int( jsi, "repeat", 1, 1 );
         }
         void apply( mapgendata &dat, const jmapgen_int &x, const jmapgen_int &y ) const override {
-            dat.m.place_items( group_id, chance.get(), point( x.val, y.val ), point( x.valmax, y.valmax ), true,
+            int real_chance = chance.get();
+            const oter_id &terrain_type = dat.terrain_type();
+            if( is_ot_match( "house", terrain_type, ot_match_type::prefix ) ||
+                is_ot_match( "garden_house", terrain_type, ot_match_type::prefix ) ) {
+                real_chance = roll_remainder( real_chance * get_option<float>( "HOUSE_ITEM_SPAWNRATE" ) );
+                if( real_chance == 0 ) {
+                    return;
+                }
+            }
+            dat.m.place_items( group_id, real_chance, point( x.val, y.val ), point( x.valmax, y.valmax ), true,
                                calendar::start_of_cataclysm );
         }
 };
@@ -1095,8 +1104,17 @@ class jmapgen_loot : public jmapgen_piece
             if( rng( 0, 99 ) < chance ) {
                 const Item_spawn_data *const isd = &result_group;
                 const std::vector<item> spawn = isd->create( calendar::start_of_cataclysm );
+                int chance_each_item = 100;
+                const oter_id &terrain_type = dat.terrain_type();
+                if( is_ot_match( "house", terrain_type, ot_match_type::prefix ) ||
+                    is_ot_match( "garden_house", terrain_type, ot_match_type::prefix ) ) {
+                    chance_each_item = roll_remainder( chance_each_item * get_option<float>( "HOUSE_ITEM_SPAWNRATE" ) );
+                    if( chance_each_item == 0 ) {
+                        return;
+                    }
+                }
                 dat.m.spawn_items( tripoint( rng( x.val, x.valmax ), rng( y.val, y.valmax ),
-                                             dat.m.get_abs_sub().z ), spawn );
+                                             dat.m.get_abs_sub().z ), spawn, chance_each_item );
             }
         }
 
@@ -5952,8 +5970,8 @@ std::vector<item *> map::place_items( const items_location &loc, const int chanc
     }
 
     const float spawn_rate = get_option<float>( "ITEM_SPAWNRATE" );
-    int spawn_count = roll_remainder( chance * spawn_rate / 100.0f );
-    for( int i = 0; i < spawn_count; i++ ) {
+    int spawn_percent = roll_remainder( chance * spawn_rate );
+    while( spawn_percent > 0 ) {
         // Might contain one item or several that belong together like guns & their ammo
         int tries = 0;
         auto is_valid_terrain = [this, ongrass]( int x, int y ) {
@@ -5972,9 +5990,11 @@ std::vector<item *> map::place_items( const items_location &loc, const int chanc
             tries++;
         } while( is_valid_terrain( px, py ) && tries < 20 );
         if( tries < 20 ) {
-            auto put = put_items_from_loc( loc, tripoint( px, py, abs_sub.z ), turn );
+            auto put = put_items_from_loc( loc, tripoint( px, py, abs_sub.z ), turn,
+                                           ( spawn_percent < 100 ? spawn_percent : 100 ) );
             res.insert( res.end(), put.begin(), put.end() );
         }
+        spawn_percent -= 100;
     }
     for( auto e : res ) {
         if( e->is_tool() || e->is_gun() || e->is_magazine() ) {
@@ -5990,10 +6010,10 @@ std::vector<item *> map::place_items( const items_location &loc, const int chanc
 }
 
 std::vector<item *> map::put_items_from_loc( const items_location &loc, const tripoint &p,
-        const time_point &turn )
+        const time_point &turn, int chance )
 {
     const auto items = item_group::items_from( loc, turn );
-    return spawn_items( p, items );
+    return spawn_items( p, items, chance );
 }
 
 void map::add_spawn( const mtype_id &type, int count, const tripoint &p, bool friendly,
