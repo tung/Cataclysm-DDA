@@ -63,6 +63,7 @@
 #include "input.h"
 #include "item_category.h"
 #include "item_location.h"
+#include "iteminfo_query.h"
 #include "iuse_actor.h"
 #include "json.h"
 #include "kill_tracker.h"
@@ -7013,8 +7014,7 @@ void game::reset_item_list_state( const catacurses::window &window, int height, 
     for( int i = 1; i < TERMX; i++ ) {
         if( i < width ) {
             mvwputch( window, point( i, 0 ), c_light_gray, LINE_OXOX ); // -
-            mvwputch( window, point( i, TERMY - height - 1 - VIEW_OFFSET_Y * 2 ), c_light_gray,
-                      LINE_OXOX ); // -
+            mvwputch( window, point( i, TERMY - height - 1 - VIEW_OFFSET_Y * 2 ), c_light_gray, ' ' );
         }
 
         if( i < TERMY - height - VIEW_OFFSET_Y * 2 ) {
@@ -7026,10 +7026,8 @@ void game::reset_item_list_state( const catacurses::window &window, int height, 
     mvwputch( window, point_zero, c_light_gray, LINE_OXXO ); // |^
     mvwputch( window, point( width - 1, 0 ), c_light_gray, LINE_OOXX ); // ^|
 
-    mvwputch( window, point( 0, TERMY - height - 1 - VIEW_OFFSET_Y * 2 ), c_light_gray,
-              LINE_XXXO ); // |-
     mvwputch( window, point( width - 1, TERMY - height - 1 - VIEW_OFFSET_Y * 2 ), c_light_gray,
-              LINE_XOXX ); // -|
+              LINE_XOXO ); // |
 
     mvwprintz( window, point( 2, 0 ), c_light_green, "<Tab> " );
     wprintz( window, c_white, _( "Items" ) );
@@ -7123,7 +7121,7 @@ void game::list_items_monsters()
 
 game::vmenu_ret game::list_items( const std::vector<map_item_stack> &item_list )
 {
-    int iInfoHeight = std::min( 25, TERMY / 2 );
+    int iInfoHeight = std::min( 20, TERMY / 2 );
     const int width = 45;
     const int offsetX = TERMX - VIEW_OFFSET_X - width;
 
@@ -7465,7 +7463,18 @@ game::vmenu_ret game::list_items( const std::vector<map_item_stack> &item_list )
             if( iItemNum > 0 ) {
                 std::vector<iteminfo> vThisItem;
                 std::vector<iteminfo> vDummy;
-                activeItem->example->info( true, vThisItem );
+                iteminfo_query query = iteminfo_query(
+                    std::vector<iteminfo_parts> {
+                        iteminfo_parts::BASE_MATERIAL,
+                        iteminfo_parts::BASE_VOLUME,
+                        iteminfo_parts::BASE_WEIGHT,
+                        iteminfo_parts::BASE_CATEGORY,
+                        iteminfo_parts::DESCRIPTION,
+                        iteminfo_parts::DESCRIPTION_NOTES,
+                        iteminfo_parts::DESCRIPTION_CONTENTS
+                    }
+                );
+                activeItem->example->info( vThisItem, &query );
 
                 item_info_data dummy( "", "", vThisItem, vDummy, iScrollPos );
                 dummy.without_getch = true;
@@ -7486,8 +7495,8 @@ game::vmenu_ret game::list_items( const std::vector<map_item_stack> &item_list )
 
         if( iItemNum > 0 ) {
             // print info window title: < item name >
-            mvwprintw( w_item_info, point( 2, 0 ), "< " );
-            trim_and_print( w_item_info, point( 4, 0 ), width - 8, activeItem->example->color_in_inventory(),
+            mvwprintw( w_item_info, point( 1, 0 ), "< " );
+            trim_and_print( w_item_info, point( 3, 0 ), width - 6, activeItem->example->color_in_inventory(),
                             activeItem->example->display_name() );
             wprintw( w_item_info, " >" );
         }
