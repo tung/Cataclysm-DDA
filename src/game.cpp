@@ -7184,8 +7184,6 @@ game::vmenu_ret game::list_items( const std::vector<map_item_stack> &item_list )
     ctxt.register_action( "RIGHT", to_translation( "Next item" ) );
     ctxt.register_action( "PAGE_DOWN" );
     ctxt.register_action( "PAGE_UP" );
-    ctxt.register_action( "DESCRIPTION_UP" );
-    ctxt.register_action( "DESCRIPTION_DOWN" );
     ctxt.register_action( "NEXT_TAB" );
     ctxt.register_action( "PREV_TAB" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
@@ -7366,37 +7364,11 @@ game::vmenu_ret game::list_items( const std::vector<map_item_stack> &item_list )
                     page_num = activeItem->vIG.size() - 1;
                 }
             }
-        } else if( action == "PAGE_UP" ) {
-            iScrollPos = 0;
-            page_num = 0;
-            if( iActive > iItemNum - 1 - iMaxRows / 2 ) {
-                iActive = iItemNum - 1 - iMaxRows / 2;
-            }
-            iActive -= iMaxRows;
-            if( iActive < 0 ) {
-                iActive = 0;
-            }
-            if( !mSortCategory[iActive].empty() ) {
-                iActive = clamp( iActive + 1, 0, iItemNum - 1 );
-            }
-        } else if( action == "PAGE_DOWN" ) {
-            iScrollPos = 0;
-            page_num = 0;
-            if( iActive < iMaxRows / 2 ) {
-                iActive = iMaxRows / 2;
-            }
-            iActive += iMaxRows;
-            if( iActive >= iItemNum ) {
-                iActive = clamp( iActive - 1, 0, iItemNum - 1 );
-            }
-            if( !mSortCategory[iActive].empty() ) {
-                iActive = clamp( iActive - 1, 0, iItemNum - 1 );
-            }
         } else if( action == "LEFT" ) {
             page_num = std::max( 0, page_num - 1 );
-        } else if( action == "DESCRIPTION_UP" ) {
+        } else if( action == "PAGE_UP" ) {
             iScrollPos--;
-        } else if( action == "DESCRIPTION_DOWN" ) {
+        } else if( action == "PAGE_DOWN" ) {
             iScrollPos++;
         } else if( action == "NEXT_TAB" || action == "PREV_TAB" ) {
             u.view_offset = stored_view_offset;

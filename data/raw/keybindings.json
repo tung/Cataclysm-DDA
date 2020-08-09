@@ -2217,20 +2217,6 @@
   },
   {
     "type": "keybinding",
-    "id": "DESCRIPTION_UP",
-    "category": "LIST_ITEMS",
-    "name": "Scroll description up",
-    "bindings": [ { "input_method": "keyboard", "key": "[" } ]
-  },
-  {
-    "type": "keybinding",
-    "id": "DESCRIPTION_DOWN",
-    "category": "LIST_ITEMS",
-    "name": "Scroll description down",
-    "bindings": [ { "input_method": "keyboard", "key": "]" } ]
-  },
-  {
-    "type": "keybinding",
     "id": "EXAMINE",
     "category": "LIST_ITEMS",
     "name": "Examine",
