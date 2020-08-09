@@ -7171,6 +7171,8 @@ game::vmenu_ret game::list_items( const std::vector<map_item_stack> &item_list )
     int page_num = 0;
     int iCatSortNum = 0;
     int iScrollPos = 0;
+    bool show_full_item_info = false;
+    int full_item_info_pos = 0;
     map_item_stack *activeItem = nullptr;
     std::map<int, std::string> mSortCategory;
 
@@ -7202,7 +7204,9 @@ game::vmenu_ret game::list_items( const std::vector<map_item_stack> &item_list )
     }
 
     do {
-        if( action == "COMPARE" ) {
+        if( show_full_item_info ) {
+            // do nothing, just skip this set of action checks
+        } else if( action == "COMPARE" ) {
             game_menus::inv::compare( u, active_pos );
             refresh_all();
         } else if( action == "FILTER" ) {
@@ -7224,18 +7228,6 @@ game::vmenu_ret game::list_items( const std::vector<map_item_stack> &item_list )
             refilter = true;
             uistate.list_item_filter_active = false;
             addcategory = !sort_radius;
-        } else if( action == "EXAMINE" && !filtered_items.empty() && activeItem ) {
-            std::vector<iteminfo> vThisItem;
-            std::vector<iteminfo> vDummy;
-            activeItem->example->info( true, vThisItem );
-
-            item_info_data info_data( activeItem->example->tname(), activeItem->example->type_name(), vThisItem,
-                                      vDummy );
-            info_data.handle_scrolling = true;
-
-            draw_item_info( 0, width - 5, 0, TERMY - VIEW_OFFSET_Y * 2, info_data );
-            // wait until the user presses a key to wipe the screen
-            iLastActive.reset();
         } else if( action == "PRIORITY_INCREASE" ) {
             draw_item_filter_rules( w_item_info, 0, iInfoHeight - 1, item_filter_type::HIGH_PRIORITY );
             list_item_upvote = string_input_popup()
@@ -7300,7 +7292,9 @@ game::vmenu_ret game::list_items( const std::vector<map_item_stack> &item_list )
             highPEnd = list_filter_high_priority( filtered_items, list_item_upvote );
             lowPStart = list_filter_low_priority( filtered_items, highPEnd, list_item_downvote );
             iActive = 0;
+            iScrollPos = 0;
             page_num = 0;
+            full_item_info_pos = 0;
             iLastActive.reset();
             iItemNum = filtered_items.size();
         }
@@ -7333,7 +7327,18 @@ game::vmenu_ret game::list_items( const std::vector<map_item_stack> &item_list )
 
         reset_item_list_state( w_items_border, iInfoHeight, sort_radius );
 
-        if( action == "HELP_KEYBINDINGS" ) {
+        if( show_full_item_info &&
+            !( action == "UP" || action == "DOWN" || action == "HELP_KEYBINDINGS" ) ) {
+            if( action == "PAGE_UP" ) {
+                full_item_info_pos--;
+            } else if ( action == "PAGE_DOWN" ) {
+                full_item_info_pos++;
+            } else {
+                show_full_item_info = false;
+            }
+        } else if( action == "EXAMINE" && !filtered_items.empty() && activeItem ) {
+            show_full_item_info = !show_full_item_info;
+        } else if( action == "HELP_KEYBINDINGS" ) {
             draw_ter();
             wrefresh( w_terrain );
         } else if( action == "UP" ) {
@@ -7343,6 +7348,7 @@ game::vmenu_ret game::list_items( const std::vector<map_item_stack> &item_list )
             } while( !mSortCategory[iActive].empty() );
             iScrollPos = 0;
             page_num = 0;
+            full_item_info_pos = 0;
             if( iActive < 0 ) {
                 iActive = iItemNum - 1;
             }
@@ -7353,6 +7359,7 @@ game::vmenu_ret game::list_items( const std::vector<map_item_stack> &item_list )
             } while( !mSortCategory[iActive].empty() );
             iScrollPos = 0;
             page_num = 0;
+            full_item_info_pos = 0;
             if( iActive >= iItemNum ) {
                 iActive = mSortCategory[0].empty() ? 0 : 1;
             }
@@ -7486,6 +7493,23 @@ game::vmenu_ret game::list_items( const std::vector<map_item_stack> &item_list )
                 centerlistview( active_pos, width );
                 draw_trail_to_square( active_pos, true );
             }
+
+            if( show_full_item_info ) {
+                if( filtered_items.empty() || !activeItem ) {
+                    show_full_item_info = false;
+                } else {
+                    std::vector<iteminfo> vThisItem;
+                    std::vector<iteminfo> vDummy;
+                    activeItem->example->info( true, vThisItem );
+
+                    item_info_data info_data( activeItem->example->tname(), activeItem->example->type_name(), vThisItem,
+                                              vDummy, full_item_info_pos );
+                    info_data.without_getch = true;
+
+                    draw_item_info( 0, std::min( width - 1, TERMX - width ), 0, TERMY - VIEW_OFFSET_Y * 2, info_data );
+                }
+            }
+
             draw_scrollbar( w_items_border, iActive, iMaxRows, iItemNum, point_south );
             wrefresh( w_items_border );
         }
@@ -7505,6 +7529,10 @@ game::vmenu_ret game::list_items( const std::vector<map_item_stack> &item_list )
         wrefresh( w_item_info );
         catacurses::refresh();
         action = ctxt.handle_input();
+        if( show_full_item_info && action == "QUIT" ) {
+            // Close the full item info window instead.
+            action = "EXAMINE";
+        }
     } while( action != "QUIT" );
 
     u.view_offset = stored_view_offset;
