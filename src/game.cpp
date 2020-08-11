@@ -7699,15 +7699,18 @@ game::vmenu_ret game::list_monsters( const std::vector<Creature *> &monster_list
                 const monster *m = dynamic_cast<monster *>( critter );
                 const npc     *p = dynamic_cast<npc *>( critter );
                 nc_color name_color = critter->basic_symbol_color();
+                const int max_dir_w = get_option<bool>( "FOV_3D" ) ? 5 : 2;
 
                 if( selected ) {
-                    name_color = hilite( name_color );
+                    name_color = hilite( c_white );
                 }
 
                 if( m != nullptr ) {
-                    trim_and_print( w_monsters, point( 1, y ), width - 26, name_color, m->name() );
+                    mvwprintz( w_monsters, point( 1, y ), m->color_with_effects(), m->symbol() );
+                    trim_and_print( w_monsters, point( 3, y ), width - ( 20 + max_dir_w ), name_color, m->name() );
                 } else {
-                    trim_and_print( w_monsters, point( 1, y ), width - 26, name_color, critter->disp_name() );
+                    mvwprintz( w_monsters, point( 1, y ), p->basic_symbol_color(), "@" );
+                    trim_and_print( w_monsters, point( 3, y ), width - ( 20 + max_dir_w ), name_color, critter->disp_name() );
                     is_npc = true;
                 }
 
@@ -7734,11 +7737,11 @@ game::vmenu_ret game::list_monsters( const std::vector<Creature *> &monster_list
                     std::tie( sText, color ) =
                         ::get_hp_bar( critter->get_hp(), critter->get_hp_max(), false );
                 }
-                mvwprintz( w_monsters, point( width - 25, y ), color, sText );
+                mvwprintz( w_monsters, point( width - ( 21 + max_dir_w ), y ), color, sText );
                 const int bar_max_width = 5;
                 const int bar_width = utf8_width( sText );
                 for( int i = 0; i < bar_max_width - bar_width; ++i ) {
-                    mvwprintz( w_monsters, point( width - 21 - i, y ), c_white, "." );
+                    mvwprintz( w_monsters, point( width - ( 17 + max_dir_w ) - i, y ), c_white, "." );
                 }
 
                 if( m != nullptr ) {
@@ -7749,14 +7752,14 @@ game::vmenu_ret game::list_monsters( const std::vector<Creature *> &monster_list
                     sText = npc_attitude_name( p->get_attitude() );
                     color = p->symbol_color();
                 }
-                mvwprintz( w_monsters, point( width - 19, y ), color, sText );
+                trim_and_print( w_monsters, point( width - ( 15 + max_dir_w ), y ), 8, color, sText );
 
                 const int mon_dist = rl_dist( u.pos(), critter->pos() );
                 const int numd = mon_dist > 999 ? 4 :
                                  mon_dist > 99 ? 3 :
                                  mon_dist > 9 ? 2 : 1;
 
-                trim_and_print( w_monsters, point( width - ( 8 + numd ), y ), 6 + numd,
+                trim_and_print( w_monsters, point( width - ( 4 + max_dir_w + numd ), y ), 6 + numd,
                                 selected ? c_light_green : c_light_gray,
                                 "%*d %s",
                                 numd, mon_dist,

@@ -2208,10 +2208,11 @@ int npc::print_info( const catacurses::window &w, int line, int vLines, int colu
     trim_and_print( w, point( column + bar.first.length() + 1, line ), iWidth, basic_symbol_color(),
                     name );
 
-    // Hostility indicator in the second line.
+    // Hostility and attitude indicators in the second line.
     Attitude att = attitude_to( g->u );
     const std::pair<translation, nc_color> res = Creature::get_attitude_ui_data( att );
-    mvwprintz( w, point( column, ++line ), res.second, res.first.translated() );
+    mvwprintz( w, point( column, ++line ), res.second,
+               res.first.translated() + ", " + npc_attitude_name( attitude ) );
 
     // Awareness indicator on the third line.
     std::string senses_str = sees( g->u ) ? _( "Aware of your presence" ) :
