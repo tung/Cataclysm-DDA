@@ -628,6 +628,11 @@ static void grab()
             add_msg( _( "You can not grab the %s" ), m.furnname( grabp ) );
             return;
         }
+        if( !m.can_move_furniture( grabp, &you ) &&
+            !query_yn( _( "The %s seems heavy.  Grab it anyway?" ), m.furnname( grabp ) ) ) {
+            add_msg( _( "Never mind." ) );
+            return;
+        }
         you.grab( OBJECT_FURNITURE, grabp - you.pos() );
         if( !m.can_move_furniture( grabp, &you ) ) {
             add_msg( _( "You grab the %s. It feels really heavy." ), m.furnname( grabp ) );
