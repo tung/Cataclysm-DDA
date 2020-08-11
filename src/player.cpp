@@ -3294,8 +3294,11 @@ item::reload_option player::select_ammo( const item &base, bool prompt, bool emp
         return ammo_list[ 0 ];
     }
 
-    if( !prompt && ammo_list.size() == 1 ) {
-        // unconditionally suppress the prompt if there's only one option
+    if( !prompt && ammo_list.size() == 1 &&
+        ( ( base.is_watertight_container() && !base.is_container_empty() ) ||
+          ( !base.is_watertight_container() && base.magazine_integral() ) ) ) {
+        // suppress the prompt if there's only one option
+        // and base is a non-empty container or has an integral magazine
         return ammo_list[ 0 ];
     }
 
