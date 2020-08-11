@@ -1530,6 +1530,8 @@ void inventory_selector::set_filter()
 
     ime_sentry sentry;
 
+    std::string old_filter = filter;
+
     do {
         mvwprintz( w_inv, point( 2, getmaxy( w_inv ) - 1 ), c_cyan, "< " );
         mvwprintz( w_inv, point( ( getmaxx( w_inv ) / 2 ) - 4, getmaxy( w_inv ) - 1 ), c_cyan, " >" );
@@ -1545,18 +1547,27 @@ void inventory_selector::set_filter()
     } while( spopup.context().get_raw_input().get_first_input() != '\n' &&
              spopup.context().get_raw_input().get_first_input() != KEY_ESCAPE );
 
+    if( filter == old_filter ) {
+        return;
+    }
+
     for( const auto elem : columns ) {
         elem->set_filter( filter );
     }
+    get_active_column().select( 0, scroll_direction::FORWARD );
     layout_is_valid = false;
 }
 
 void inventory_selector::set_filter( const std::string &str )
 {
+    if( str == filter ) {
+        return;
+    }
     filter = str;
     for( const auto elem : columns ) {
         elem->set_filter( filter );
     }
+    get_active_column().select( 0, scroll_direction::FORWARD );
     layout_is_valid = false;
 }
 
