@@ -21,7 +21,7 @@
     "name": { "str": "M1911 magazine" },
     "description": "A military issue 7-round magazine for use with the M1911 handgun.",
     "weight": "70 g",
-    "volume": "250 ml",
+    "volume": "61 ml",
     "price": 2980,
     "material": "steel",
     "symbol": "#",

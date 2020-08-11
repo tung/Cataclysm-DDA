@@ -6,6 +6,8 @@
     "type": "GUN",
     "name": { "str": "flintlock carbine" },
     "description": "This short rifle design once dominated the battlefields of ancient Europe, and may yet re-earn its feared status due to its ease of handling and ability to use easily-crafted ammunition.",
+    "weight": "3600 g",
+    "volume": "2250 ml",
     "valid_mod_locations": [
       [ "accessories", 1 ],
       [ "sling", 1 ],
@@ -36,7 +38,7 @@
     "reload_noise_volume": 10,
     "name": { "str": "flintlock pistol" },
     "description": "A beautifully decorated flintlock pistol.  If using this doesn't make you feel a pirate, nothing will.",
-    "weight": "1000 g",
+    "weight": "1 kg",
     "volume": "390 ml",
     "price": 35000,
     "to_hit": -1,
