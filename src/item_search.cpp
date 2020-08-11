@@ -3,9 +3,12 @@
 #include <map>
 #include <utility>
 
+#include "ammo.h"
 #include "cata_utility.h"
 #include "item.h"
 #include "item_category.h"
+#include "itype.h"
+#include "iuse_actor.h"
 #include "material.h"
 #include "mtype.h"
 #include "requirements.h"
@@ -63,6 +66,29 @@ std::function<bool( const item & )> basic_item_filter( std::string filter )
                 } catch ( io::InvalidEnumString & ) {
                     return false;
                 }
+            };
+        // ammo type
+        case 'a':
+            return [filter]( const item & i ) {
+                if( i.is_ammo() ) {
+                    if( lcmatch( i.ammo_type()->name(), filter ) ) {
+                        return true;
+                    }
+                } else if( ( i.is_gun() && i.ammo_required() ) || i.is_magazine() ) {
+                    for( const ammotype &at : i.ammo_types() ) {
+                        if( lcmatch( at->name(), filter ) ) {
+                            return true;
+                        }
+                    }
+                } else if( i.is_bandolier() ) {
+                    const bandolier_actor *ba = dynamic_cast<const bandolier_actor *>( i.type->get_use( "bandolier" )->get_actor_ptr() );
+                    for( const ammotype &at : ba->ammo ) {
+                        if( lcmatch( at->name(), filter ) ) {
+                            return true;
+                        }
+                    }
+                }
+                return false;
             };
         // both
         case 'b':
