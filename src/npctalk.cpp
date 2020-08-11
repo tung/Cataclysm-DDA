@@ -224,7 +224,14 @@ static int npc_select_menu( const std::vector<npc *> &npc_list, const std::strin
         uilist nmenu;
         nmenu.text = prompt;
         for( auto &elem : npc_list ) {
-            nmenu.addentry( -1, true, MENU_AUTOASSIGN, ( elem )->name );
+            std::pair<translation, nc_color> res = Creature::get_attitude_ui_data( elem->attitude_to( g->u ) );
+            nmenu.addentry( -1, true, MENU_AUTOASSIGN,
+                            string_format( "%1$s (%2$d %3$s), %4$s, %5$s",
+                                           elem->name,
+                                           rl_dist( g->u.pos(), elem->pos() ),
+                                           trim( direction_name_short( direction_from( g->u.pos(), elem->pos() ) ) ),
+                                           res.first.translated(),
+                                           npc_attitude_name( elem->get_attitude() ) ) );
         }
         if( npc_count > 1 && everyone ) {
             nmenu.addentry( -1, true, MENU_AUTOASSIGN, _( "Everyone" ) );
@@ -357,7 +364,7 @@ void game::chat()
 {
     int volume = g->u.get_shout_volume();
 
-    const std::vector<npc *> available = get_npcs_if( [&]( const npc & guy ) {
+    std::vector<npc *> available = get_npcs_if( [&]( const npc & guy ) {
         // TODO: Get rid of the z-level check when z-level vision gets "better"
         return u.posz() == guy.posz() && u.sees( guy.pos() ) &&
                rl_dist( u.pos(), guy.pos() ) <= SEEX * 2;
@@ -441,6 +448,17 @@ void game::chat()
 
     switch( nmenu.ret ) {
         case NPC_CHAT_TALK: {
+            // Sort NPCs by distance or, failing that, name.
+            std::sort( available.begin(), available.end(), []( const npc *l, const npc *r ) {
+                int l_dist = rl_dist( g->u.pos(), l->pos() );
+                int r_dist = rl_dist( g->u.pos(), r->pos() );
+                if( l_dist < r_dist ) {
+                    return true;
+                } else if ( r_dist < l_dist ) {
+                    return false;
+                }
+                return l->name.compare( r->name ) < 0;
+            } );
             const int npcselect = npc_select_menu( available, _( "Talk to whom?" ), false );
             if( npcselect < 0 ) {
                 return;
