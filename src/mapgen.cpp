@@ -1056,7 +1056,8 @@ class jmapgen_item_group : public jmapgen_piece
             int real_chance = chance.get();
             const oter_id &terrain_type = dat.terrain_type();
             if( is_ot_match( "house", terrain_type, ot_match_type::prefix ) ||
-                is_ot_match( "garden_house", terrain_type, ot_match_type::prefix ) ) {
+                is_ot_match( "garden_house", terrain_type, ot_match_type::prefix ) ||
+                is_ot_match( "rural_house", terrain_type, ot_match_type::contains ) ) {
                 real_chance = roll_remainder( real_chance * get_option<float>( "HOUSE_ITEM_SPAWNRATE" ) );
                 if( real_chance == 0 ) {
                     return;
@@ -1107,7 +1108,8 @@ class jmapgen_loot : public jmapgen_piece
                 int chance_each_item = 100;
                 const oter_id &terrain_type = dat.terrain_type();
                 if( is_ot_match( "house", terrain_type, ot_match_type::prefix ) ||
-                    is_ot_match( "garden_house", terrain_type, ot_match_type::prefix ) ) {
+                    is_ot_match( "garden_house", terrain_type, ot_match_type::prefix ) ||
+                    is_ot_match( "rural_house", terrain_type, ot_match_type::contains ) ) {
                     chance_each_item = roll_remainder( chance_each_item * get_option<float>( "HOUSE_ITEM_SPAWNRATE" ) );
                     if( chance_each_item == 0 ) {
                         return;
