@@ -117,7 +117,7 @@ std::function<bool( const item & )> basic_item_filter( std::string filter )
         // by name
         default:
             return [filter]( const item & a ) {
-                return lcmatch( a.tname(), filter );
+                return lcmatch( a.tname( 1, false ), filter );
             };
     }
 }
