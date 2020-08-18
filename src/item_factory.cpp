@@ -224,6 +224,7 @@ void Item_factory::finalize_pre( itype &obj )
                 obj.ammo->loudness += ( du.amount + du.res_pen ) * 2;
             }
         }
+        obj.ammo->loudness = obj.ammo->loudness * 3 / 5;
 
         const auto &mats = obj.materials;
         if( std::find( mats.begin(), mats.end(), material_id( "hydrocarbons" ) ) == mats.end() &&
