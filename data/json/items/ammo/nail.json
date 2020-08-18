@@ -30,6 +30,7 @@
     "damage": 4,
     "pierce": 3,
     "dispersion": 120,
+    "loudness": 0,
     "effects": [ "NON-FOULING" ]
   }
 ]
